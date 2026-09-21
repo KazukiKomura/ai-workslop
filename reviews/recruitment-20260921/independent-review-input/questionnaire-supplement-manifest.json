@@ -1,0 +1,12 @@
+{
+  "createdAt": "2026-09-21T07:04:13.466Z",
+  "file": "questionnaire-supplement.json",
+  "sha256": "53a794a3cf2237ec35c75a9ae77444d0ffadca89df40724ede1402da1bf619b8",
+  "sources": [
+    "src/measurement.js",
+    "src/cases.js",
+    "public/app.js",
+    "src/worker.js"
+  ],
+  "purpose": "質問全文と表示・回答規則。前レビューの欠落資料を追加。"
+}

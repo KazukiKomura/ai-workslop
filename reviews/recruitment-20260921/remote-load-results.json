@@ -1,0 +1,124 @@
+{
+  "runId": "remote-load-1789972971516",
+  "kind": "synthetic remote API load verification",
+  "from": "2026-09-21T06:42:51.515Z",
+  "participants": [
+    "6932e6af-adbf-467e-bd6c-03fad9bd8a7d",
+    "39ae8d26-5ae3-4860-b53e-78c4ecdfe5f4",
+    "97a45ce9-ec13-4ad4-9154-b5b79b2ad7f4",
+    "ecabcddb-6969-4829-ae90-c71e11f57d04",
+    "ed01dee8-a1e7-4b32-8100-70630cc6627c",
+    "b7db00d4-d57c-4fc5-8133-7588699776d1",
+    "adc54b58-92d2-41c2-ad8b-9500fb536a0c",
+    "b673b620-e77c-40a4-9ff7-a0a959b1fc9e",
+    "85c4b9bf-c49a-4b6c-ac95-066759d28b81",
+    "4b42d4bf-fc80-4936-b603-f8f0b85bc551",
+    "87a9f630-4e7a-4c7f-a063-8961c5365868",
+    "3ecd8bed-f9ed-4aa2-8f9e-27b733e689eb",
+    "798204b2-ba36-4eae-9a48-9966b78acf28",
+    "71234dd5-feb3-4aeb-bd52-30fae78b8c86",
+    "223488c4-cfe7-4729-a1d5-0e9342175258",
+    "48d51a93-7177-4a83-90e3-1c857492644e",
+    "21af1b64-f9e3-47dc-9a05-fd0dbbb2cc64",
+    "1754a130-f536-4690-9e67-d0266c7885d1",
+    "6249677e-ed86-48ab-9eb6-f96391dfccc9",
+    "33a410ba-d63c-4bd0-81fa-1e30e6fe892c",
+    "dc235d68-9e56-434d-b8c7-4c3561cc08cb",
+    "dff3924b-92b6-4d43-84ca-2ef8b71ea212",
+    "8adead07-3c73-43f3-8da0-22da0c8723b6",
+    "ebcafd16-7c8f-42ec-b934-459711331e71",
+    "0d8a65d6-9ba3-4f46-8671-e2f0f3f2abae",
+    "d7d39c06-2392-4fe8-ab64-87b20ae4ad93",
+    "fac7088c-9abf-440e-a2d0-59074d737288",
+    "28aa5d9b-dc27-459f-add0-743b4559391e",
+    "d145b59f-a595-4d11-bcae-6338010b9582",
+    "940a69f4-f330-43ba-a067-5bbf91132607",
+    "0f7fab89-eb1c-48fd-822b-329b31d11201",
+    "50b19c30-c48e-4b59-a1c5-a1ec059c5c3c",
+    "7a1fc904-743a-40f1-85b6-a7355956bba7",
+    "9ea21956-abcb-4fcb-a049-b295e752a3d4",
+    "1413a23f-542d-406f-91d1-de2d5f60efe7",
+    "2bc1eea5-90e2-4f79-a55c-ffa5ad80474b",
+    "9fb31221-ade8-499b-a89a-c8ba70c94c48",
+    "a8147d63-0c8b-4267-b353-8c475982c99c",
+    "1eb01bdd-75dc-4236-ba59-2aef9ff57d97",
+    "9dc27cf7-f8d5-4d66-9212-f34f7761934b",
+    "7a8427bd-eefb-4ff5-b7fc-2b2f551b5660",
+    "566f7114-b31c-4111-b570-68aec145dbc2",
+    "efa94c66-6544-433b-9d60-24ff8304b4a2",
+    "382a1d4d-c3d2-4ab6-a6d8-2950af6ce679",
+    "207fdc88-d919-4ab4-871f-c6a7e193c155",
+    "7542625e-f202-406f-9498-36db4897aa16",
+    "2bfb5b5c-bf32-4634-9d69-b1b2ef49901a",
+    "37323dd4-90cb-48be-a681-9abcd6492b7c",
+    "3a1be37c-ef57-4040-a61c-14b303008603",
+    "8614db17-df39-40bf-9b2d-8cd2a2a68732"
+  ],
+  "stages": {
+    "start": {
+      "requests": 50,
+      "success": 50,
+      "statusCounts": {
+        "200": 50
+      },
+      "medianMs": 1570,
+      "p95Ms": 1597,
+      "maxMs": 1602,
+      "wallMs": 1611
+    },
+    "logs": {
+      "requests": 50,
+      "success": 50,
+      "statusCounts": {
+        "200": 50
+      },
+      "medianMs": 484,
+      "p95Ms": 488,
+      "maxMs": 489
+    },
+    "replay": {
+      "requests": 50,
+      "success": 50,
+      "statusCounts": {
+        "200": 50
+      },
+      "medianMs": 280,
+      "p95Ms": 282,
+      "maxMs": 282
+    },
+    "resume": {
+      "requests": 50,
+      "success": 50,
+      "statusCounts": {
+        "200": 50
+      },
+      "medianMs": 410,
+      "p95Ms": 422,
+      "maxMs": 422
+    },
+    "withdraw": {
+      "requests": 50,
+      "success": 50,
+      "statusCounts": {
+        "200": 50
+      },
+      "medianMs": 861,
+      "p95Ms": 863,
+      "maxMs": 863
+    }
+  },
+  "errors": [],
+  "to": "2026-09-21T06:42:55.450Z",
+  "stored": {
+    "sessions": 50,
+    "caseRecords": 200,
+    "events": 5000,
+    "withdrawn": 50,
+    "uniqueEventIds": 5000,
+    "disclosure": {
+      "undisclosed": 26,
+      "disclosed": 24
+    }
+  },
+  "verdict": "PASS"
+}

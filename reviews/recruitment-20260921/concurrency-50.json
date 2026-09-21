@@ -1,0 +1,13 @@
+{
+  "checkedAt": "2026-09-21T07:21:48.020Z",
+  "environment": "isolated local Miniflare + D1, not production load or performance measurement",
+  "simultaneousStarts": 50,
+  "successfulStarts": 50,
+  "uniqueParticipants": 50,
+  "caseRecords": 200,
+  "uniqueEvents": 5000,
+  "retriedEvents": 5000,
+  "successfulResumes": 50,
+  "localStartWallMs": 352,
+  "localTotalWallMs": 718
+}

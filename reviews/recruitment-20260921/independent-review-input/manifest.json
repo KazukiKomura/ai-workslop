@@ -1,0 +1,35 @@
+{
+  "createdAt": "2026-09-21T06:58:48.758Z",
+  "protocol": "recipient-20260921-v7.2",
+  "files": [
+    {
+      "file": "../../src/worker.js",
+      "sha256": "28d579a0792a3eeb7bee3c9e28500d00a42e2538792bf0d8bb68c49a73f68cf9"
+    },
+    {
+      "file": "../../src/measurement.js",
+      "sha256": "0ed08bfd4758f27782ee56d3859ee9c669ed41db3bf1363f024e7cdc2c62087c"
+    },
+    {
+      "file": "../../src/cases.js",
+      "sha256": "cb82690f0e1e9dca2681e4caede164a74befd8cbe047f7180e5421a397e5d5b2"
+    },
+    {
+      "file": "../../public/app.js",
+      "sha256": "f2e40cd5e6a42416ed34d28486ed996cff5dfd8090301db57723d7610c5e26a6"
+    },
+    {
+      "file": "methods-measures.html",
+      "sha256": "68e6197955ee274d1870b04df8faf56e1ea544c784e67355e38f8eb35a17ba29"
+    }
+  ],
+  "reviewInput": [
+    "independent-review-input/methods-measures.html"
+  ],
+  "notProvided": [
+    "conversation",
+    "prior reviews",
+    "author decisions",
+    "implementation source code"
+  ]
+}

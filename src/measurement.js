@@ -49,7 +49,7 @@ export const measurement={
       q('tr_4','自分で確認できない状況でも、自分にとって重要な仕事を{sender}さんに安心して任せられる。',{source:'trust'})
     ]},
     post:{title:'提出までの作業について',instruction:'報告案を読んでから提出するまでの作業について答えてください。この質問への回答は含めません。',questions:[
-      {id:'effort_total',type:'scale',min:0,max:10,unknown:false,ends:'0：まったく費やさなかった ／ 10：非常に多く費やした',text:'報告案を読み、資料を確認し、必要な修正をして提出するまでに、どの程度の精神的な努力を費やしましたか。',source:'study (single-item mental effort)'},
+      {id:'effort_total',type:'scale',min:1,max:7,unknown:false,ends:'1：まったく費やさなかった ／ 7：非常に多く費やした',text:'報告案を読み、資料を確認し、必要な修正をして提出するまでに、どの程度の精神的な努力を費やしましたか。',source:'study (single-item mental effort)'},
       {id:'tlx_md',type:'range',min:0,max:100,step:5,label:'知的・知覚的要求',ends:['低い','高い'],text:'どの程度の知的・知覚的な活動（考える、判断する、記憶する、読む、探すなど）が必要でしたか。作業はやさしかったですか、難しかったですか。単純でしたか、複雑でしたか。',source:'tlx'},
       {id:'tlx_pd',type:'range',min:0,max:100,step:5,label:'身体的要求',ends:['低い','高い'],text:'どの程度の身体的な活動（入力する、操作するなど）が必要でしたか。',source:'tlx'},
       {id:'tlx_td',type:'range',min:0,max:100,step:5,label:'タイムプレッシャー',ends:['低い','高い'],text:'作業のペースや速さについて、どの程度の時間的な切迫感を感じましたか。',source:'tlx'},
@@ -90,9 +90,9 @@ export const measurement={
     ]},
     recall:{title:'報告案の作成方法について',instruction:'最後に、この調査で受け取った報告案の作成方法について答えてください。',questions:[
       {id:'memory',type:'choice',text:'受け取った報告案に、作成方法についての説明はありましたか。',options:['すべての報告案に、生成AIを使ったという説明があった','一部の報告案にだけ、生成AIを使ったという説明があった','作成方法の説明はなかった','覚えていない'],source:'study (disclosure check)'},
-      {id:'disc_confidence',type:'scale',min:0,max:10,unknown:false,ends:'0：まったく自信がない ／ 10：確信している',text:'いまの答え（作成方法の説明があったかどうか）に、どの程度自信がありますか。',source:'study (disclosure check)'},
-      {id:'belief',type:'scale',min:0,max:10,unknown:false,ends:'0：まったく思わなかった ／ 10：非常に強く思った',text:'作業中、受け取った報告案に生成AIが使われたと、どの程度思っていましたか。',source:'study (v3)'},
-      {id:'disc_attention',type:'scale',min:0,max:10,unknown:false,ends:'0：まったく意識しなかった ／ 10：常に意識していた',text:'作業中、報告案の作成方法（生成AIを使ったかどうか）をどの程度意識していましたか。',source:'study (disclosure check)'},
+      {id:'disc_confidence',type:'scale',min:1,max:7,unknown:false,ends:'1：まったく自信がない ／ 7：確信している',text:'いまの答え（作成方法の説明があったかどうか）に、どの程度自信がありますか。',source:'study (disclosure check)'},
+      {id:'belief',type:'scale',min:1,max:7,unknown:false,ends:'1：まったく思わなかった ／ 7：非常に強く思った',text:'作業中、受け取った報告案に生成AIが使われたと、どの程度思っていましたか。',source:'study (v3)'},
+      {id:'disc_attention',type:'scale',min:1,max:7,unknown:false,ends:'1：まったく意識しなかった ／ 7：常に意識していた',text:'作業中、報告案の作成方法（生成AIを使ったかどうか）をどの程度意識していましたか。',source:'study (disclosure check)'},
       {id:'disc_influence',type:'scale',min:0,max:6,unknown:false,ends:'0：確認や修正を減らす方向 ／ 3：影響しなかった ／ 6：確認や修正を増やす方向',text:'報告案の作成方法について考えたことは、確認・修正の仕方にどのように影響しましたか。',source:'study (disclosure check)'},
       {id:'disc_free',type:'text',required:false,maxLength:2000,text:'報告案の作成方法について考えたことや、表示を見て感じたことがあれば書いてください。（任意・自由記述）',source:'study (disclosure check)'}
     ]}

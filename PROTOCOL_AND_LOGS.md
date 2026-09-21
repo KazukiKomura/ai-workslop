@@ -1,5 +1,7 @@
 # 参加者実験・記録仕様
 
+> 2026-09-21更新：以下のv4以前の記載は旧仕様です。現行 `recipient-20260921-v7.2` の手順・指標・ログ粒度は [方法と指標のHTML](reviews/recruitment-20260921/methods-measures.html) を参照してください。4案件／人・4内容条件×開示2群で、U1/U2は実施しません。入力差分は記録しますが、現在はkeydown／pointermove／個別compositionイベントを収集せず、scrollは500ms間隔、heartbeatは60秒間隔です。旧表を現行の収集範囲と解釈しないでください。
+
 ## 現行プロトコル recipient-20260921-v4（2026-09-21）
 
 6案件×内容状態4（baseline / missing_info / off_focus / overreach。登録済みは baseline・overreach）×AI開示2。案件は mode 内で順次均衡配置、土台は案件内で均衡、内容状態と開示は理解確認通過時に独立一様割付。理解確認は全問正答まで繰り返し、回数を attempts に記録する（割付前終了なし）。

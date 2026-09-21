@@ -91,11 +91,17 @@ async function events(r,env,s,b){
  SELECT ?,json_extract(value,'$.id'),json_extract(value,'$.page'),json_extract(value,'$.seq'),json_extract(value,'$.phase'),json_extract(value,'$.type'),json_extract(value,'$.wall'),json_extract(value,'$.mono'),?,json_extract(value,'$.payload') FROM json_each(?)`).bind(s.id,time,JSON.stringify(b.events)).run();
  return {ack:b.events.map(e=>e.id),receivedAt:time};
 }
-async function exportPage(env,url){const table=url.searchParams.get('table')||'sessions';if(!['sessions','session_cases','events','responses','actions','versions'].includes(table))fail('種類が不正です。');const cursor=url.searchParams.get('cursor')||'0';const limit=500;let query;
- if(table==='events')query=env.DB.prepare('SELECT e.*,s.mode,s.condition,s.disclosure,s.case_id,s.protocol_version FROM events e JOIN sessions s ON s.id=e.session_id WHERE e.id>? ORDER BY e.id LIMIT ?').bind(Number(cursor),limit);
- else if(table==='sessions')query=env.DB.prepare('SELECT s.rowid AS cursor_id,s.id,s.mode,s.phase,s.revision,s.created_at,s.updated_at,s.assigned_at,s.condition,s.disclosure,s.sequence,s.plan_json,s.case_id,s.protocol_version,s.stimulus_hash,s.completed_at,s.completion_code,s.attempts,s.consent_json,s.meta_json,i.label AS invitation_label,i.campaign_hash FROM sessions s JOIN invitations i ON i.code_hash=s.invitation_hash WHERE s.rowid>? ORDER BY s.rowid LIMIT ?').bind(Number(cursor),limit);
- else query=env.DB.prepare(`SELECT rowid AS cursor_id,* FROM ${table} WHERE rowid>? ORDER BY rowid LIMIT ?`).bind(Number(cursor),limit);
- const {results}=await query.all();return {table,rows:results,next:results.length===limit?String(results.at(-1)[table==='events'?'id':'cursor_id']):null};}
+async function exportPage(env,url){
+ const table=url.searchParams.get('table')||'sessions';if(!['sessions','session_cases','events','responses','actions','versions'].includes(table))fail('種類が不正です。');
+ const cursor=url.searchParams.get('cursor')||'0',limit=500;const params=[];let range='';
+ for(const [key,op]of [['from','>='],['to','<']]){const value=url.searchParams.get(key);if(value){const date=new Date(value);if(!Number.isFinite(date.getTime()))fail('日時の形式が不正です。');range+=` AND s.created_at${op}?`;params.push(date.toISOString())}}
+ let sql;
+ if(table==='sessions')sql='SELECT s.rowid AS cursor_id,s.id,s.mode,s.phase,s.revision,s.created_at,s.updated_at,s.assigned_at,s.condition,s.disclosure,s.sequence,s.plan_json,s.case_id,s.protocol_version,s.stimulus_hash,s.completed_at,s.completion_code,s.attempts,s.consent_json,s.meta_json,i.label AS invitation_label,i.campaign_hash FROM sessions s JOIN invitations i ON i.code_hash=s.invitation_hash WHERE s.rowid>?'+range+' ORDER BY s.rowid LIMIT ?';
+ else if(table==='events')sql='SELECT e.*,s.mode,s.condition,s.disclosure,s.case_id,s.protocol_version FROM events e JOIN sessions s ON s.id=e.session_id WHERE e.id>?'+range+' ORDER BY e.id LIMIT ?';
+ else if(table==='versions'){sql='SELECT rowid AS cursor_id,* FROM versions WHERE rowid>? ORDER BY rowid LIMIT ?';params.length=0;}
+ else sql=`SELECT t.rowid AS cursor_id,t.* FROM ${table} t JOIN sessions s ON s.id=t.session_id WHERE t.rowid>?`+range+' ORDER BY t.rowid LIMIT ?';
+ const {results}=await env.DB.prepare(sql).bind(Number(cursor),...params,limit).all();return {table,rows:results,next:results.length===limit?String(results.at(-1)[table==='events'?'id':'cursor_id']):null};
+}
 async function allocate(env,mode,campaignHash=null){
  // 1. AI disclosure: independent fair draw per participant (p=0.5), never adjusted for starts, completions or dropouts (decision 2026-09-21).
  const disclosure=integer(2)===0?'disclosed':'undisclosed';
@@ -148,7 +154,7 @@ async function api(r,env,url){const path=url.pathname;
  const existing=await env.DB.prepare('SELECT * FROM sessions WHERE invitation_hash=?').bind(codeHash).first();if(existing){if(existing.token_hash!==tokenHash)fail('この参加コードは使用済みです。元のブラウザで再開してください。',409);return json({...await state(existing,env),code:b.code},200,{'set-cookie':setCookie('participant',b.resumeToken)})}
  if(!c.enrollmentOpen)fail('現在、新規参加の受付を停止しています。',403);
  if(!b.meta||typeof b.meta!=='object')fail('参加者情報を入力してください。');number(b.meta.gender,0,3);number(b.meta.age,18,99);const meta={viewport:b.meta?.viewport||null,language:String(b.meta?.language||'').slice(0,30),timezone:String(b.meta?.timezone||'').slice(0,100),gender:b.meta.gender,age:b.meta.age};
- const id=random(),time=now(),hash=await sha(JSON.stringify(cases));const plan=await allocate(env,inv.mode,inv.campaign_hash||null);const consent={...c,consentedAt:time,version:VERSION,logging:'編集欄内の入力・削除・変換・選択・コピー貼付の操作、資料の開閉・スクロール、画面の表示状態、回答変更、提出文書を記録。氏名・メール・IP・他サイト操作はアプリで保存しない。'};
+ const id=random(),time=now(),hash=await sha(JSON.stringify(cases));const plan=await allocate(env,inv.mode,inv.campaign_hash||null);const {resetIps:unusedLegacyIp,...consentConfig}=c;const consent={...consentConfig,consentedAt:time,version:VERSION,logging:'編集欄内の入力・削除・変換・選択・コピー貼付の操作、資料の開閉・スクロール、画面の表示状態、回答変更、提出文書を記録。氏名・メール・IP・他サイト操作はアプリで保存しない。'};
  const stmts=[env.DB.prepare('INSERT INTO sessions(id,token_hash,invitation_hash,mode,phase,created_at,updated_at,assigned_at,case_id,condition,disclosure,sequence,plan_json,protocol_version,stimulus_hash,completion_code,question_order,consent_json,meta_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)').bind(id,tokenHash,codeHash,inv.mode,'intro',time,time,time,plan.cases[0].case_id,`williams${plan.row}`,plan.disclosure,plan.sequence,JSON.stringify({...plan,cases:plan.cases.map(({text,...x})=>x)}),VERSION,hash,random().slice(0,8).toUpperCase(),'[]',JSON.stringify(consent),JSON.stringify(meta)),
   env.DB.prepare('UPDATE invitations SET session_id=? WHERE code_hash=? AND session_id IS NULL').bind(id,codeHash)];
  for(const pc of plan.cases)stmts.push(env.DB.prepare('INSERT INTO session_cases(session_id,idx,case_id,base_id,condition,sender,initial_text,draft_text,draft_seq,version_hash) VALUES(?,?,?,?,?,?,?,?,0,?)').bind(id,pc.idx,pc.case_id,pc.base_id,pc.condition,pc.sender,pc.text,pc.text,await sha(pc.text)));

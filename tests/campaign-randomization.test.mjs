@@ -1,7 +1,7 @@
 // Isolated local D1/Worker integration tests; never connect to production.
 import test,{before,after} from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile,mkdir} from 'node:fs/promises';
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {chromium} from '@playwright/test';
 import {randomUUID} from 'node:crypto';
 import {build} from 'esbuild';
@@ -84,8 +84,8 @@ test('browser: shared entry needs no invitation code; admin shows one flow and a
   await page.reload();await page.waitForFunction(()=>document.querySelector('#withdraw')&&!document.querySelector('#withdraw').hidden);
   const after=await page.evaluate(()=>fetch('/api/state').then(r=>r.json()));assert.equal(after.sessionId,before.sessionId);
   await page.goto(origin+'admin');await page.locator('#key').fill('local-campaign-test-key');await page.getByRole('button',{name:'ログイン',exact:true}).click();
-  await page.locator('#campaign-label').waitFor();assert.equal(await page.locator('#campaign-target').count(),0);assert.equal(await page.locator('#campaign-capacity').count(),0);assert.equal(await page.locator('#campaign-mode').count(),0);assert.equal(await page.locator('#mode').count(),0);await page.locator('#campaign-list table').waitFor();
-  assert.match(await page.locator('#campaign-list').innerText(),/開示あり/);assert.doesNotMatch(await page.locator('#campaign-list').innerText(),/完了目標|開始上限/);
+  await page.locator('#export-from').waitFor();assert.equal(await page.locator('#campaign-target').count(),0);assert.equal(await page.locator('#campaign-capacity').count(),0);assert.equal(await page.locator('#campaign-mode').count(),0);assert.equal(await page.locator('#mode').count(),0);assert.equal(await page.locator('#campaign-label').count(),0);await page.locator('#export-to').waitFor();
+  assert.match(await page.locator('#admin').innerText(),/参加開始日時/);
   await mkdir(new URL('../test-results/',import.meta.url),{recursive:true});await page.screenshot({path:new URL('../test-results/campaign-randomization-admin.png',import.meta.url).pathname,fullPage:true});
  }finally{await browser.close()}
 });
@@ -116,4 +116,13 @@ test('50 simultaneous starts and 50 simultaneous event batches: no duplicate par
  const actual=await db.prepare('SELECT count(*) AS n FROM sessions s JOIN invitations i ON i.code_hash=s.invitation_hash WHERE i.campaign_hash=?').bind(c.tokenHash).first();assert.equal(actual.n,50);
  const result={checkedAt:new Date().toISOString(),environment:'isolated local Miniflare + D1, not production load or performance measurement',simultaneousStarts:50,successfulStarts:50,uniqueParticipants:50,caseRecords:200,uniqueEvents:count.n,retriedEvents:5000,successfulResumes:50,localStartWallMs:Math.round(startWallMs),localTotalWallMs:Math.round(performance.now()-began)};
  await mkdir(new URL('../reviews/recruitment-20260921/',import.meta.url),{recursive:true});await writeFile(new URL('../reviews/recruitment-20260921/concurrency-50.json',import.meta.url),JSON.stringify(result,null,2));console.log(JSON.stringify(result));
+});
+
+test('export filters by server-side participant start time with inclusive start and exclusive end',async()=>{
+ const c=await newCampaign(0);const a=await start(payload(c.token)),b=await start(payload(c.token));
+ await db.batch([db.prepare('UPDATE sessions SET created_at=? WHERE id=?').bind('2020-01-01T00:00:00.000Z',a.data.sessionId),db.prepare('UPDATE sessions SET created_at=? WHERE id=?').bind('2020-01-02T00:00:00.000Z',b.data.sessionId)]);
+ const query='from=2020-01-01T00%3A00%3A00.000Z&to=2020-01-02T00%3A00%3A00.000Z';
+ const sessions=await adm('export?table=sessions&'+query);assert.equal(sessions.status,200);assert.deepEqual(sessions.data.rows.map(r=>r.id),[a.data.sessionId]);
+ const sc=await adm('export?table=session_cases&'+query);assert.equal(sc.data.rows.length,4);assert(sc.data.rows.every(r=>r.session_id===a.data.sessionId));
+ assert.equal((await adm('export?table=sessions&from=not-a-date')).status,400);
 });

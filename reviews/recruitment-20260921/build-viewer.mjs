@@ -1,0 +1,11 @@
+import {readFile,writeFile} from 'node:fs/promises';
+const here=new URL('./',import.meta.url);
+const E=JSON.parse(await readFile(new URL('rawdata-e2e.json',here),'utf8'));
+const L=JSON.parse(await readFile(new URL('remote-load-results.json',here),'utf8'));
+const raw={manifest:E.manifest,tables:E.raw};
+await writeFile(new URL('rawdata.json',here),JSON.stringify(raw,null,2));
+await writeFile(new URL('readable-data.json',here),JSON.stringify({manifest:E.manifest,tables:E.decoded},null,2));
+const embedded=JSON.stringify({e2e:E,load:L}).replaceAll('<','\\u003c');
+const template=await readFile(new URL('viewer-template.html',here),'utf8');
+await writeFile(new URL('rawdata-viewer.html',here),template.replace('/*__DATA__*/',embedded));
+console.log(JSON.stringify({participant:E.manifest.sessionId,counts:E.manifest.savedCounts,html:new URL('rawdata-viewer.html',here).pathname}));

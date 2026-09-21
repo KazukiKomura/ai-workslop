@@ -1,0 +1,10 @@
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {homedir} from 'node:os';
+const root=new URL('../',import.meta.url);
+const auth=await readFile(homedir()+'/Library/Preferences/.wrangler/config/default.toml','utf8');
+const token=auth.match(/^oauth_token\s*=\s*"([^"]+)"/m)?.[1];if(!token)throw Error('Existing Wrangler OAuth token unavailable');
+const {account}=JSON.parse(await readFile(new URL('.wrangler/cache/wrangler-account.json',root),'utf8'));
+const paths=['workers/account-settings','workers/scripts/handoff-research/settings','subscriptions','d1/database/8896d8a5-2619-4e06-bc0d-2af4a969e35d'];
+const results=await Promise.allSettled(paths.map(async path=>{const r=await fetch('https://api.cloudflare.com/client/v4/accounts/'+account.id+'/'+path,{headers:{Authorization:'Bearer '+token}});const d=await r.json();if(!r.ok||!d.success)return {path,status:r.status,errors:d.errors};if(path==='subscriptions')return {path,status:r.status,result:d.result.map(s=>({state:s.state,rate_plan:s.rate_plan?.public_name||s.rate_plan?.id,name:s.rate_plan?.name}))};if(path.endsWith('/settings'))return {path,status:r.status,result:{limits:d.result.limits,usage_model:d.result.usage_model}};return {path,status:r.status,result:d.result};}));
+const output={checkedAt:new Date().toISOString(),results:results.map((r,i)=>r.status==='fulfilled'?r.value:{path:paths[i],error:String(r.reason)})};
+await mkdir(new URL('.private/capacity-check/',root),{recursive:true});await writeFile(new URL('.private/capacity-check/account.json',root),JSON.stringify(output,null,2),{mode:0o600});console.log(JSON.stringify(output,null,2));
