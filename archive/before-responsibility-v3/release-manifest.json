@@ -1,0 +1,43 @@
+{
+  "created_at": "2026-09-19T02:45:47.286380+00:00",
+  "cloudflare_version": "cb645a3b-3e3d-49df-84a8-e77bb4dba207",
+  "files": {
+    "src/worker.js": "538b2a0d983252f7d65f8b67451825e74e6e337aad1d7243aa10423535569dc4",
+    "src/case.js": "a2fa8b3b829cf68141cb3ac235bd2091e0ad70b142f130b83e412bfe8193ac62",
+    "schema.sql": "dade2804f5f8a9e4d2bf56c9d9b20fffb2cfa22f7690d834333f8e5d61ac7332",
+    "public/index.html": "62671d2957a96423424e349a6e055a37e5dee38f0c5f05fb3cdee89f31bc3c99",
+    "public/app.js": "a2cee2a2f8c46a03d3a0f114d8ec48b64aa4e2be20249f2537a0019edbbf9ad6",
+    "public/app.css": "4c1642335a1976fbad4345846f9563fa033b331d42235cda85f9cccc535870c8",
+    "public/admin.html": "18bb80a670697aa4b8effcf510759f3745317d8aa539f2d7338bbcf0f4550089",
+    "public/admin.js": "9c836a2871cfd17684aa1a81b96bd43069a1ce8b26ad38fe4b47fa7a1be279b6"
+  },
+  "production_verification": {
+    "at": "2026-09-19T02:38:41.953Z",
+    "browser": {
+      "testedAt": "2026-09-19T02:38:41.953Z",
+      "base": "https://handoff-research.research-public.workers.dev",
+      "results": [
+        {
+          "viewport": "desktop",
+          "session": "bdacef55-4c25-4d7d-bb36-0208c527a6a8",
+          "phase": "complete",
+          "eventCount": 309,
+          "edited": true,
+          "offlineRecovery": true,
+          "domErrors": []
+        },
+        {
+          "viewport": "mobile",
+          "session": "ac457acd-4170-4bb3-98c2-1875fc0b0a40",
+          "phase": "complete",
+          "eventCount": 284,
+          "edited": false,
+          "offlineRecovery": false,
+          "domErrors": []
+        }
+      ],
+      "adminCSV": true
+    },
+    "api_note": "The six API tests passed on the preceding release; this UI release was rechecked with desktop/mobile production browser flows."
+  }
+}

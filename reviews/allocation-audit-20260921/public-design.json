@@ -1,0 +1,119 @@
+{
+  "checkedAt": "2026-09-21T05:46:03.231Z",
+  "version": "recipient-20260921-v7",
+  "k": 4,
+  "sequences": [
+    {
+      "disclosure": "disclosed",
+      "row": 0
+    },
+    {
+      "disclosure": "disclosed",
+      "row": 1
+    },
+    {
+      "disclosure": "disclosed",
+      "row": 2
+    },
+    {
+      "disclosure": "disclosed",
+      "row": 3
+    },
+    {
+      "disclosure": "undisclosed",
+      "row": 0
+    },
+    {
+      "disclosure": "undisclosed",
+      "row": 1
+    },
+    {
+      "disclosure": "undisclosed",
+      "row": 2
+    },
+    {
+      "disclosure": "undisclosed",
+      "row": 3
+    }
+  ],
+  "themes": [
+    {
+      "id": "CASE01_LIGHTING",
+      "title": "照明改善に向けた現地調査の優先方針",
+      "bases": 1
+    },
+    {
+      "id": "CASE02_POWER",
+      "title": "電源タップ改善の調査方針",
+      "bases": 1
+    },
+    {
+      "id": "CASE03_FORMS",
+      "title": "申請支援の試行方針",
+      "bases": 1
+    },
+    {
+      "id": "CASE04_REMINDERS",
+      "title": "納付案内文の試行方針",
+      "bases": 1
+    },
+    {
+      "id": "CASE05_SMS",
+      "title": "予約SMSの比較試行方針",
+      "bases": 1
+    },
+    {
+      "id": "CASE06_TOWELS",
+      "title": "客室案内の比較試行方針",
+      "bases": 1
+    }
+  ],
+  "conditions": [
+    "baseline",
+    "missing_info",
+    "off_focus",
+    "overreach"
+  ],
+  "phases": [
+    "intro",
+    "materials_1",
+    "read_1",
+    "cognition_1",
+    "edit_1",
+    "post_1",
+    "trust_post_1",
+    "perception_1",
+    "responsibility_1",
+    "understanding_1",
+    "materials_2",
+    "read_2",
+    "cognition_2",
+    "edit_2",
+    "post_2",
+    "trust_post_2",
+    "perception_2",
+    "responsibility_2",
+    "understanding_2",
+    "materials_3",
+    "read_3",
+    "cognition_3",
+    "edit_3",
+    "post_3",
+    "trust_post_3",
+    "perception_3",
+    "responsibility_3",
+    "understanding_3",
+    "materials_4",
+    "read_4",
+    "cognition_4",
+    "edit_4",
+    "post_4",
+    "trust_post_4",
+    "perception_4",
+    "responsibility_4",
+    "understanding_4",
+    "reflection",
+    "recall",
+    "complete"
+  ]
+}

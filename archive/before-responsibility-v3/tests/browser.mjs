@@ -1,0 +1,42 @@
+import {chromium,expect} from '@playwright/test';
+import assert from 'node:assert/strict';
+import {mkdir,writeFile} from 'node:fs/promises';
+const base=process.env.TEST_URL||'http://localhost:8791',key=process.env.ADMIN_KEY||'local-test-admin-key';
+async function adm(path,body){const r=await fetch(base+'/api/admin/'+path,{method:body?'POST':'GET',headers:{authorization:'Bearer '+key,'content-type':'application/json'},body:body?JSON.stringify(body):undefined});assert(r.ok,await r.clone().text());return r.json()}
+async function exported(table){let cursor='0',rows=[];do{const b=await adm(`export?table=${table}&cursor=${cursor}`);rows.push(...b.rows);cursor=b.next}while(cursor);return rows}
+await mkdir('test-results',{recursive:true});
+const browser=await chromium.launch({headless:true,executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
+const results=[];let lastPage;const failedResponses=[];
+try{
+for(const mobile of [false,true]){
+const context=await browser.newContext({viewport:mobile?{width:390,height:844}:{width:1440,height:1000}});
+const page=await context.newPage();lastPage=page;page.on('response',async r=>{if(r.status()>=400&&r.url().includes('/api/'))failedResponses.push({url:r.url(),status:r.status(),body:await r.text().catch(()=>null)})});const errors=[];page.on('pageerror',e=>errors.push(e.message));
+const invite=(await adm('invites',{mode:'test',count:1,label:'browser end-to-end '+(mobile?'mobile':'desktop')})).invitations[0];
+await page.goto(invite.url);await page.locator('#consent').waitFor();await page.screenshot({path:`test-results/consent-${mobile?'mobile':'desktop'}.png`,fullPage:true});await page.locator('#consent').check();await page.getByRole('button',{name:'同意して開始する'}).click();await page.getByRole('heading',{name:'作業の説明'}).waitFor();
+const state=await page.evaluate(()=>fetch('/api/state').then(r=>r.json()));assert(!state.condition);assert(!state.questions[0].answer);
+const second=await context.newPage();await second.goto(base);await second.getByRole('heading',{name:'別のタブで参加中です。'}).waitFor();await second.close();
+for(let step=0;step<2;step++){await page.screenshot({path:`test-results/instruction-${step}-${mobile?'mobile':'desktop'}.png`,fullPage:true});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.getByRole('button',{name:'次へ',exact:true}).click();}
+for(const [name,v]of [['experience',0],['trust',4]])await page.locator(`input[name="${name}"][value="${v}"]`).check();
+if(!mobile){await page.getByRole('button',{name:'戻る',exact:true}).click();await page.getByRole('button',{name:'次へ',exact:true}).click();await page.reload();await expect(page.locator('input[name="trust"][value="4"]')).toBeChecked();}
+await page.getByRole('button',{name:'次へ',exact:true}).click();
+for(const [name,v]of [['k0',1],['k1',1],['k2',1],['k3',1]])await page.locator(`input[name="${name}"][value="${v}"]`).check();
+await page.getByRole('button',{name:'下書きを受け取る'}).click();await page.locator('#read-done').waitFor();assert.equal(await page.locator('#editor').count(),0);
+await page.locator('details[data-source="S1"] summary').click();await page.locator('#materials-panel').evaluate(el=>el.scrollTop=200);await page.locator('#draft').evaluate(el=>el.scrollTop=100);await page.screenshot({path:`test-results/read-${mobile?'mobile':'desktop'}.png`,fullPage:true});
+assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+await page.locator('#read-done').click();await page.locator('input[name="burden"][value="4"]').check();await page.getByRole('button',{name:'確認・修正へ進む'}).click();await page.locator('#editor').waitFor();await expect(page.locator('#editor')).toBeEditable();
+const original=await page.locator('#editor').inputValue();let submitted=original;
+if(!mobile){await page.locator('#editor').focus();await page.locator('#editor').press('ControlOrMeta+End');await page.keyboard.insertText('\n確認記録と訓練の実施体制を確認する。');submitted=await page.locator('#editor').inputValue();assert.notEqual(submitted,original);
+await context.setOffline(true);await page.keyboard.insertText('\n費用見積もりも確認する。');submitted=await page.locator('#editor').inputValue();await page.waitForTimeout(2300);await context.setOffline(false);await page.reload();await page.locator('#editor').waitFor();await expect(page.locator('#editor')).toBeEditable();assert.equal(await page.locator('#editor').inputValue(),submitted);
+await page.locator('#editor').evaluate(el=>{el.dispatchEvent(new CompositionEvent('compositionstart',{data:''}));el.dispatchEvent(new CompositionEvent('compositionupdate',{data:'へんかん'}));el.dispatchEvent(new CompositionEvent('compositionend',{data:'変換'}))});}
+await page.screenshot({path:`test-results/edit-${mobile?'mobile':'desktop'}.png`,fullPage:true});
+await page.locator('#submit-document').click();await page.getByRole('heading',{name:'提出までの作業について教えてください'}).waitFor();
+await page.locator('input[name="burden"][value="3"]').check();for(let i=0;i<5;i++)await page.locator(`input[name="t${i}"][value="4"]`).check();await page.getByRole('button',{name:'次へ',exact:true}).click();await page.locator('input[name="memory"][value="2"]').check();await page.locator('input[name="belief"][value="3"]').check();await page.getByRole('button',{name:'次へ',exact:true}).click();
+await page.getByRole('heading',{name:'最初の下書きについて教えてください'}).waitFor();for(const name of ['I1','I2','F1','F2','accuracy','coverage','traceability','naturalness'])await page.locator(`input[name="${name}"][value="4"]`).check();await page.locator('input[name="aiExperience"][value="2"]').check();await page.getByRole('button',{name:'回答を送信して終了する'}).click();await page.getByRole('heading',{name:'ご参加ありがとうございました。'}).waitFor();await page.waitForFunction(()=>document.getElementById('sync').textContent==='保存済み');
+const session=(await exported('sessions')).find(x=>x.id===state.sessionId);assert.equal(session.phase,'complete');assert.equal(session.submitted_text,submitted);const logs=(await exported('events')).filter(x=>x.session_id===state.sessionId);for(const t of ['phase_render','instruction_step','source_open','answer_change','click','scroll'])assert(logs.some(e=>e.type===t),t);if(!mobile)for(const t of ['editor_input','editor_snapshot','editor_compositionstart'])assert(logs.some(e=>e.type===t),t);
+const changes=logs.filter(x=>x.type==='editor_input').map(x=>JSON.parse(x.payload_json));if(!mobile){let text=original;for(const e of changes){const p=e.patch;assert.equal(text.slice(p.start,p.start+p.removed.length),p.removed);text=text.slice(0,p.start)+p.inserted+text.slice(p.start+p.removed.length)}assert.equal(text,submitted)}
+assert.equal(new Set(logs.map(e=>e.event_id)).size,logs.length);assert.deepEqual(errors,[]);results.push({viewport:mobile?'mobile':'desktop',session:state.sessionId,phase:session.phase,eventCount:logs.length,edited:submitted!==original,offlineRecovery:!mobile,domErrors:errors});const nextInvite=(await adm('invites',{mode:'test',count:1,label:'same browser restart verification'})).invitations[0];await page.goto(nextInvite.url);await page.getByRole('heading',{name:'参加のご案内'}).waitFor();await page.locator('#consent').check();await page.getByRole('button',{name:'同意して開始する'}).click();await page.getByRole('heading',{name:'作業の説明'}).waitFor();page.once('dialog',d=>d.accept());await page.locator('#withdraw').click();await page.getByRole('heading',{name:'参加を中止しました。'}).waitFor();await context.close();
+}
+// Admin: password login, stats and downloads remain inaccessible without authentication.
+const ctx=await browser.newContext();const page=await ctx.newPage();await page.goto(base+'/admin');await page.locator('#key').fill(key);await page.getByRole('button',{name:'ログイン',exact:true}).click();await page.getByRole('heading',{name:'参加と記録の管理'}).waitFor();const downloadPromise=page.waitForEvent('download');await page.getByRole('button',{name:'参加者別CSV'}).click();const file=await downloadPromise;await file.saveAs('test-results/participants.csv');await page.screenshot({path:'test-results/admin.png',fullPage:true});await ctx.close();
+await writeFile('test-results/browser-verification.json',JSON.stringify({testedAt:new Date().toISOString(),base,results,adminCSV:true},null,2));console.log(JSON.stringify(results,null,2));
+}catch(e){if(lastPage&&!lastPage.isClosed()){await lastPage.screenshot({path:'test-results/failure.png',fullPage:true});console.error(await lastPage.locator('#error').textContent())}console.error(JSON.stringify(failedResponses));throw e}finally{await browser.close()}

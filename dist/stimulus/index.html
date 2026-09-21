@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ja">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>刺激候補｜照明改善の調査方針</title>
+<style>
+  :root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; color: #19312d; background: #f2f5f3; }
+  * { box-sizing: border-box; } body { margin: 0; } header, main, footer { max-width: 1120px; margin: auto; padding: 24px; }
+  header { padding-top: 42px; } h1 { font-size: 27px; line-height: 1.5; } h2 { font-size: 20px; } h3 { font-size: 17px; }
+  p { line-height: 1.9; } .tag { color: #536c65; font-size: 13px; } .notice { border-left: 4px solid #bc8a32; padding: 10px 16px; background: #fff9e9; }
+  section { padding: 22px 26px; background: white; border: 1px solid #d8e3dd; border-radius: 10px; margin-bottom: 20px; }
+  details { margin: 15px 0; border-top: 1px solid #e0e8e4; padding-top: 14px; } summary { cursor: pointer; font-weight: 600; line-height: 1.7; }
+  a { color: #176655; } .sources { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; } .sources section { min-width: 0; }
+  select, button { padding: 10px; font: inherit; border: 1px solid #91a99f; border-radius: 5px; background: white; color: #19312d; }
+  .switch { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; } #draft { border-left: 3px solid #4a8976; padding-left: 20px; }
+  textarea { width: 100%; min-height: 400px; font: inherit; padding: 16px; line-height: 1.9; border: 1px solid #aebfb7; border-radius: 6px; }
+  .muted { color: #597067; font-size: 13px; } li { line-height: 1.9; margin: 8px 0; } footer { font-size: 13px; }
+  @media (max-width: 760px) { .sources { grid-template-columns: 1fr; } header, main, footer { padding: 16px; } section { padding: 18px; } }
+</style>
+<header>
+  <p><a href="/">← 研究紹介に戻る</a></p>
+  <div class="tag">0929提出目標 · CASE01 · 刺激候補 v0.3</div>
+  <h1 id="title"></h1>
+  <p class="notice">研究者用プレビューです。3本文×開示2条件の全6パターンを切り替えて確認できます。実験では1人に1条件だけを提示し、条件名は見せません。この画面は実験アプリではなく、回答・時間・ログを保存しません。研究者向けの見出し・切替・質問一覧を参加者に同時提示しないでください。</p>
+  <p id="notice" class="muted"></p>
+</header>
+<main>
+  <section><h2>1．受け手の前提</h2><div id="background"></div>
+    <details><summary>割付前の理解確認（研究者向け：正答も表示）</summary><ol id="knowledge"></ol></details>
+  </section>
+  <div class="sources">
+    <section><h2 id="requestTitle"></h2><p id="requestLabel" class="muted"></p><div id="request"></div></section>
+    <section><h2>2．参照できる元資料</h2><div id="sources"></div><p><a id="sourceLink" target="_blank" rel="noopener">公開実証資料を確認する</a></p></section>
+  </div>
+  <section><h2>3．同僚から受け取る下書き</h2><p id="handoff"></p><p id="disclosureText"></p>
+    <div class="switch"><label for="condition">研究者用の条件切替</label><select id="condition"><option value="A">A：参照版</option><option value="B">B：関係説明を弱めた版</option><option value="C">C：回答の焦点をずらした版</option></select><span id="count" class="muted"></span></div>
+    <div class="switch"><label for="disclosure">研究者用の開示切替</label><select id="disclosure"><option value="disclosed">AI使用の開示あり</option><option value="undisclosed">作成方法の開示なし</option></select></div>
+    <h3 id="draftTitle"></h3><div id="draft"></div>
+  </section>
+  <section><h2>4．提出物の編集イメージ</h2><p id="submission"></p><p class="muted">操作感の確認用です。編集内容は保存されません。条件を切り替えると下書きに戻ります。</p><label for="editor">提出する報告書</label><textarea id="editor"></textarea></section>
+  <section><h2>5．信頼・送り手評価の測定案</h2><p class="muted">事前（開示前）と提出後に同じ信頼項目を質問。他の評価は提出後のみ。7件法＋判断できないの自作項目案です。</p><p id="trustRepeated"></p><ol id="trustAfter"></ol></section>
+  <section><h2>6．実験で最後に行う操作チェック</h2><p>提出・負担・信頼を確定した後、まず再表示せず開示の記憶と認識を尋ねます。その後、開示文を付けずに元の下書きと依頼だけを再表示し、文書を評価してもらいます。</p><h3>再表示の前</h3><p id="disclosureCheck"></p><p id="disclosureOptions" class="muted"></p><p id="disclosureBelief"></p><h3>元の下書きの再表示後</h3><ol id="checks"></ol><p class="muted">文書の項目は1：まったく当てはまらない〜7：非常によく当てはまる／判断できない。項目順を無作為化します。自分が修正した文章への評価ではありません。このプレビューでは回答を収集しません。</p></section>
+</main>
+<footer>公開資料を基にした日本語の研究用再構成。原資料の画像・図表・長文転載はしていません。研究計画の概要と出典は、<a href="/">研究紹介ページ</a>をご覧ください。</footer>
+<script src="case_data.js"></script>
+<script>
+  'use strict';
+  const data = window.STIMULUS_CASE;
+  const byId = id => document.getElementById(id);
+  function paragraphs(target, values) { target.replaceChildren(...values.map(value => { const p = document.createElement('p'); p.textContent = value; return p; })); }
+  byId('title').textContent = data.title; byId('notice').textContent = data.notice;
+  paragraphs(byId('background'), data.background);
+  byId('requestTitle').textContent = data.request.title; byId('requestLabel').textContent = data.request.label;
+  paragraphs(byId('request'), data.request.paragraphs);
+  data.knowledgeCheck.forEach(item => { const li = document.createElement('li'); li.textContent = item.question + '　正答：' + item.options[item.answer]; byId('knowledge').append(li); });
+  data.sources.forEach(item => { const detail = document.createElement('details'); detail.id = item.id; const summary = document.createElement('summary'); summary.textContent = '[' + item.id + '] ' + item.title; const origin = document.createElement('p'); origin.className = 'muted'; origin.textContent = item.origin; const body = document.createElement('div'); paragraphs(body, item.paragraphs); detail.append(summary, origin, body); byId('sources').append(detail); });
+  byId('sourceLink').href = data.source.url; byId('sourceLink').textContent = data.source.label;
+  byId('handoff').textContent = data.handoff; byId('draftTitle').textContent = data.draftTitle; byId('submission').textContent = data.submission;
+  function showDraft() { const draft = data.drafts[byId('condition').value]; paragraphs(byId('draft'), draft.paragraphs); byId('editor').value = draft.paragraphs.join('\n\n'); byId('count').textContent = draft.paragraphs.join('').length + '字（段落改行を除く）'; }
+  byId('condition').addEventListener('change', showDraft);
+  function showDisclosure() { const text = data.disclosures[byId('disclosure').value].text; byId('disclosureText').textContent = text; byId('disclosureText').hidden = !text; }
+  byId('disclosure').addEventListener('change', showDisclosure);
+  byId('trustRepeated').textContent = '受領前・提出後：' + data.trustQuestions.beforeAndAfter;
+  data.trustQuestions.after.forEach(text => { const li = document.createElement('li'); li.textContent = text; byId('trustAfter').append(li); });
+  byId('disclosureCheck').textContent = data.disclosureCheck.question;
+  byId('disclosureOptions').textContent = data.disclosureCheck.options.join(' ／ ');
+  byId('disclosureBelief').textContent = data.disclosureCheck.belief;
+  data.manipulationChecks.forEach(item => { const li = document.createElement('li'); li.textContent = item.text; byId('checks').append(li); });
+  showDraft();
+  showDisclosure();
+</script>
+</html>

@@ -1,0 +1,623 @@
+{
+  "checkedAt": "2026-09-21T05:47:02.645Z",
+  "method": "Executed current allocate() in isolated VM, mock DB, deterministic PRNG replacing only crypto for reproducibility. No production writes. Concurrent scenario deliberately lets all plans read empty counts before any insert.",
+  "orders": [
+    [
+      0,
+      1,
+      3,
+      2
+    ],
+    [
+      1,
+      2,
+      0,
+      3
+    ],
+    [
+      2,
+      3,
+      1,
+      0
+    ],
+    [
+      3,
+      0,
+      2,
+      1
+    ]
+  ],
+  "williams": {
+    "everyStateOncePerPosition": true,
+    "adjacentPairsUnique": true
+  },
+  "sequential": [
+    {
+      "seed": 1,
+      "participants": 50,
+      "sequenceCounts": [
+        7,
+        6,
+        6,
+        6,
+        7,
+        6,
+        6,
+        6
+      ],
+      "disclosure": {
+        "undisclosed": 25,
+        "disclosed": 25
+      },
+      "themeCounts": {
+        "CASE01_LIGHTING": 33,
+        "CASE05_SMS": 33,
+        "CASE03_FORMS": 33,
+        "CASE04_REMINDERS": 34,
+        "CASE06_TOWELS": 34,
+        "CASE02_POWER": 33
+      },
+      "themeConditionDisclosureCellMin": 3,
+      "themeConditionDisclosureCellMax": 5
+    },
+    {
+      "seed": 2,
+      "participants": 50,
+      "sequenceCounts": [
+        6,
+        7,
+        6,
+        6,
+        6,
+        6,
+        6,
+        7
+      ],
+      "disclosure": {
+        "disclosed": 25,
+        "undisclosed": 25
+      },
+      "themeCounts": {
+        "CASE05_SMS": 34,
+        "CASE04_REMINDERS": 34,
+        "CASE02_POWER": 33,
+        "CASE03_FORMS": 33,
+        "CASE01_LIGHTING": 33,
+        "CASE06_TOWELS": 33
+      },
+      "themeConditionDisclosureCellMin": 3,
+      "themeConditionDisclosureCellMax": 5
+    },
+    {
+      "seed": 3,
+      "participants": 50,
+      "sequenceCounts": [
+        6,
+        6,
+        7,
+        6,
+        6,
+        6,
+        7,
+        6
+      ],
+      "disclosure": {
+        "disclosed": 25,
+        "undisclosed": 25
+      },
+      "themeCounts": {
+        "CASE02_POWER": 34,
+        "CASE04_REMINDERS": 33,
+        "CASE01_LIGHTING": 34,
+        "CASE05_SMS": 33,
+        "CASE03_FORMS": 33,
+        "CASE06_TOWELS": 33
+      },
+      "themeConditionDisclosureCellMin": 3,
+      "themeConditionDisclosureCellMax": 5
+    },
+    {
+      "seed": 4,
+      "participants": 50,
+      "sequenceCounts": [
+        7,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        7
+      ],
+      "disclosure": {
+        "undisclosed": 25,
+        "disclosed": 25
+      },
+      "themeCounts": {
+        "CASE04_REMINDERS": 33,
+        "CASE02_POWER": 33,
+        "CASE06_TOWELS": 34,
+        "CASE05_SMS": 33,
+        "CASE03_FORMS": 34,
+        "CASE01_LIGHTING": 33
+      },
+      "themeConditionDisclosureCellMin": 3,
+      "themeConditionDisclosureCellMax": 6
+    },
+    {
+      "seed": 5,
+      "participants": 50,
+      "sequenceCounts": [
+        7,
+        6,
+        7,
+        6,
+        6,
+        6,
+        6,
+        6
+      ],
+      "disclosure": {
+        "undisclosed": 24,
+        "disclosed": 26
+      },
+      "themeCounts": {
+        "CASE06_TOWELS": 33,
+        "CASE05_SMS": 34,
+        "CASE04_REMINDERS": 34,
+        "CASE03_FORMS": 33,
+        "CASE02_POWER": 33,
+        "CASE01_LIGHTING": 33
+      },
+      "themeConditionDisclosureCellMin": 3,
+      "themeConditionDisclosureCellMax": 6
+    },
+    {
+      "seed": 6,
+      "participants": 50,
+      "sequenceCounts": [
+        6,
+        7,
+        6,
+        6,
+        6,
+        7,
+        6,
+        6
+      ],
+      "disclosure": {
+        "disclosed": 25,
+        "undisclosed": 25
+      },
+      "themeCounts": {
+        "CASE04_REMINDERS": 33,
+        "CASE01_LIGHTING": 34,
+        "CASE06_TOWELS": 33,
+        "CASE05_SMS": 33,
+        "CASE02_POWER": 34,
+        "CASE03_FORMS": 33
+      },
+      "themeConditionDisclosureCellMin": 3,
+      "themeConditionDisclosureCellMax": 5
+    },
+    {
+      "seed": 7,
+      "participants": 50,
+      "sequenceCounts": [
+        6,
+        6,
+        7,
+        6,
+        6,
+        6,
+        7,
+        6
+      ],
+      "disclosure": {
+        "disclosed": 25,
+        "undisclosed": 25
+      },
+      "themeCounts": {
+        "CASE04_REMINDERS": 34,
+        "CASE01_LIGHTING": 33,
+        "CASE05_SMS": 33,
+        "CASE06_TOWELS": 33,
+        "CASE03_FORMS": 33,
+        "CASE02_POWER": 34
+      },
+      "themeConditionDisclosureCellMin": 3,
+      "themeConditionDisclosureCellMax": 5
+    },
+    {
+      "seed": 8,
+      "participants": 50,
+      "sequenceCounts": [
+        6,
+        6,
+        7,
+        6,
+        6,
+        6,
+        6,
+        7
+      ],
+      "disclosure": {
+        "undisclosed": 25,
+        "disclosed": 25
+      },
+      "themeCounts": {
+        "CASE05_SMS": 34,
+        "CASE01_LIGHTING": 33,
+        "CASE06_TOWELS": 33,
+        "CASE02_POWER": 33,
+        "CASE03_FORMS": 34,
+        "CASE04_REMINDERS": 33
+      },
+      "themeConditionDisclosureCellMin": 3,
+      "themeConditionDisclosureCellMax": 5
+    },
+    {
+      "seed": 9,
+      "participants": 50,
+      "sequenceCounts": [
+        6,
+        7,
+        6,
+        7,
+        6,
+        6,
+        6,
+        6
+      ],
+      "disclosure": {
+        "disclosed": 26,
+        "undisclosed": 24
+      },
+      "themeCounts": {
+        "CASE04_REMINDERS": 34,
+        "CASE06_TOWELS": 33,
+        "CASE02_POWER": 33,
+        "CASE03_FORMS": 33,
+        "CASE01_LIGHTING": 33,
+        "CASE05_SMS": 34
+      },
+      "themeConditionDisclosureCellMin": 3,
+      "themeConditionDisclosureCellMax": 5
+    },
+    {
+      "seed": 10,
+      "participants": 50,
+      "sequenceCounts": [
+        6,
+        6,
+        7,
+        6,
+        6,
+        7,
+        6,
+        6
+      ],
+      "disclosure": {
+        "disclosed": 25,
+        "undisclosed": 25
+      },
+      "themeCounts": {
+        "CASE05_SMS": 33,
+        "CASE04_REMINDERS": 34,
+        "CASE06_TOWELS": 33,
+        "CASE02_POWER": 34,
+        "CASE01_LIGHTING": 33,
+        "CASE03_FORMS": 33
+      },
+      "themeConditionDisclosureCellMin": 3,
+      "themeConditionDisclosureCellMax": 5
+    },
+    {
+      "seed": 11,
+      "participants": 50,
+      "sequenceCounts": [
+        6,
+        6,
+        6,
+        7,
+        6,
+        6,
+        7,
+        6
+      ],
+      "disclosure": {
+        "disclosed": 25,
+        "undisclosed": 25
+      },
+      "themeCounts": {
+        "CASE01_LIGHTING": 33,
+        "CASE02_POWER": 33,
+        "CASE05_SMS": 33,
+        "CASE06_TOWELS": 34,
+        "CASE04_REMINDERS": 33,
+        "CASE03_FORMS": 34
+      },
+      "themeConditionDisclosureCellMin": 3,
+      "themeConditionDisclosureCellMax": 5
+    },
+    {
+      "seed": 12,
+      "participants": 50,
+      "sequenceCounts": [
+        6,
+        7,
+        6,
+        7,
+        6,
+        6,
+        6,
+        6
+      ],
+      "disclosure": {
+        "undisclosed": 24,
+        "disclosed": 26
+      },
+      "themeCounts": {
+        "CASE01_LIGHTING": 33,
+        "CASE02_POWER": 33,
+        "CASE03_FORMS": 34,
+        "CASE06_TOWELS": 34,
+        "CASE04_REMINDERS": 33,
+        "CASE05_SMS": 33
+      },
+      "themeConditionDisclosureCellMin": 3,
+      "themeConditionDisclosureCellMax": 5
+    },
+    {
+      "seed": 13,
+      "participants": 50,
+      "sequenceCounts": [
+        7,
+        7,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6
+      ],
+      "disclosure": {
+        "disclosed": 26,
+        "undisclosed": 24
+      },
+      "themeCounts": {
+        "CASE03_FORMS": 34,
+        "CASE02_POWER": 33,
+        "CASE06_TOWELS": 33,
+        "CASE04_REMINDERS": 34,
+        "CASE05_SMS": 33,
+        "CASE01_LIGHTING": 33
+      },
+      "themeConditionDisclosureCellMin": 3,
+      "themeConditionDisclosureCellMax": 5
+    },
+    {
+      "seed": 14,
+      "participants": 50,
+      "sequenceCounts": [
+        7,
+        6,
+        6,
+        7,
+        6,
+        6,
+        6,
+        6
+      ],
+      "disclosure": {
+        "undisclosed": 24,
+        "disclosed": 26
+      },
+      "themeCounts": {
+        "CASE06_TOWELS": 34,
+        "CASE02_POWER": 33,
+        "CASE05_SMS": 34,
+        "CASE04_REMINDERS": 33,
+        "CASE03_FORMS": 33,
+        "CASE01_LIGHTING": 33
+      },
+      "themeConditionDisclosureCellMin": 3,
+      "themeConditionDisclosureCellMax": 6
+    },
+    {
+      "seed": 15,
+      "participants": 50,
+      "sequenceCounts": [
+        6,
+        6,
+        7,
+        6,
+        7,
+        6,
+        6,
+        6
+      ],
+      "disclosure": {
+        "undisclosed": 25,
+        "disclosed": 25
+      },
+      "themeCounts": {
+        "CASE05_SMS": 33,
+        "CASE02_POWER": 34,
+        "CASE03_FORMS": 34,
+        "CASE01_LIGHTING": 33,
+        "CASE04_REMINDERS": 33,
+        "CASE06_TOWELS": 33
+      },
+      "themeConditionDisclosureCellMin": 3,
+      "themeConditionDisclosureCellMax": 5
+    },
+    {
+      "seed": 16,
+      "participants": 50,
+      "sequenceCounts": [
+        6,
+        6,
+        7,
+        6,
+        6,
+        6,
+        7,
+        6
+      ],
+      "disclosure": {
+        "disclosed": 25,
+        "undisclosed": 25
+      },
+      "themeCounts": {
+        "CASE01_LIGHTING": 33,
+        "CASE05_SMS": 33,
+        "CASE06_TOWELS": 34,
+        "CASE04_REMINDERS": 34,
+        "CASE02_POWER": 33,
+        "CASE03_FORMS": 33
+      },
+      "themeConditionDisclosureCellMin": 3,
+      "themeConditionDisclosureCellMax": 5
+    },
+    {
+      "seed": 17,
+      "participants": 50,
+      "sequenceCounts": [
+        7,
+        6,
+        6,
+        6,
+        7,
+        6,
+        6,
+        6
+      ],
+      "disclosure": {
+        "disclosed": 25,
+        "undisclosed": 25
+      },
+      "themeCounts": {
+        "CASE04_REMINDERS": 33,
+        "CASE06_TOWELS": 34,
+        "CASE03_FORMS": 33,
+        "CASE02_POWER": 34,
+        "CASE05_SMS": 33,
+        "CASE01_LIGHTING": 33
+      },
+      "themeConditionDisclosureCellMin": 3,
+      "themeConditionDisclosureCellMax": 5
+    },
+    {
+      "seed": 18,
+      "participants": 50,
+      "sequenceCounts": [
+        6,
+        6,
+        6,
+        7,
+        6,
+        7,
+        6,
+        6
+      ],
+      "disclosure": {
+        "disclosed": 25,
+        "undisclosed": 25
+      },
+      "themeCounts": {
+        "CASE05_SMS": 34,
+        "CASE01_LIGHTING": 33,
+        "CASE06_TOWELS": 33,
+        "CASE03_FORMS": 33,
+        "CASE02_POWER": 34,
+        "CASE04_REMINDERS": 33
+      },
+      "themeConditionDisclosureCellMin": 3,
+      "themeConditionDisclosureCellMax": 5
+    },
+    {
+      "seed": 19,
+      "participants": 50,
+      "sequenceCounts": [
+        7,
+        6,
+        6,
+        6,
+        6,
+        6,
+        6,
+        7
+      ],
+      "disclosure": {
+        "undisclosed": 25,
+        "disclosed": 25
+      },
+      "themeCounts": {
+        "CASE02_POWER": 33,
+        "CASE05_SMS": 33,
+        "CASE03_FORMS": 33,
+        "CASE01_LIGHTING": 33,
+        "CASE04_REMINDERS": 34,
+        "CASE06_TOWELS": 34
+      },
+      "themeConditionDisclosureCellMin": 2,
+      "themeConditionDisclosureCellMax": 6
+    },
+    {
+      "seed": 20,
+      "participants": 50,
+      "sequenceCounts": [
+        6,
+        7,
+        6,
+        6,
+        6,
+        7,
+        6,
+        6
+      ],
+      "disclosure": {
+        "undisclosed": 25,
+        "disclosed": 25
+      },
+      "themeCounts": {
+        "CASE02_POWER": 33,
+        "CASE04_REMINDERS": 34,
+        "CASE06_TOWELS": 34,
+        "CASE01_LIGHTING": 33,
+        "CASE05_SMS": 33,
+        "CASE03_FORMS": 33
+      },
+      "themeConditionDisclosureCellMin": 3,
+      "themeConditionDisclosureCellMax": 5
+    }
+  ],
+  "concurrentIllustration": {
+    "participants": 50,
+    "sequenceCounts": [
+      11,
+      7,
+      6,
+      4,
+      8,
+      5,
+      5,
+      4
+    ],
+    "disclosure": {
+      "disclosed": 28,
+      "undisclosed": 22
+    },
+    "themeCounts": {
+      "CASE05_SMS": 35,
+      "CASE01_LIGHTING": 34,
+      "CASE02_POWER": 32,
+      "CASE04_REMINDERS": 36,
+      "CASE06_TOWELS": 29,
+      "CASE03_FORMS": 34
+    },
+    "themeConditionDisclosureCellMin": 2,
+    "themeConditionDisclosureCellMax": 8
+  }
+}
