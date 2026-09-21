@@ -29,7 +29,7 @@ async function finish(s){
   assert.equal(s.data.phase,'reflection');assert.equal(s.data.block.questions.length,1);s=await step(s,{resp_free:''});
   assert.equal(s.data.phase,'recall');assert.equal(s.data.block.questions.length,6);assert(!('cases' in s.data));
   assert.equal((await act(s,{memory:2,belief:11,disc_confidence:5,disc_attention:3,disc_influence:3})).status,400);
-  s=await step(s,{memory:2,belief:3,disc_confidence:5,disc_attention:3,disc_influence:3,disc_free:''});assert.equal(s.data.phase,'complete');assert(s.data.completionCode);assert.equal(s.data.keyword,'21wra0966');assert.equal((await act(s,{})).status,409);
+  s=await step(s,{memory:2,belief:3,disc_confidence:5,disc_attention:3,disc_influence:3,disc_free:''});assert.equal(s.data.phase,'attitude');assert.equal(s.data.block.questions.length,4);s=await step(s,fillBlock(s.data.block));assert.equal(s.data.phase,'complete');assert(s.data.completionCode);assert.equal(s.data.keyword,'21wra0966');assert.equal((await act(s,{})).status,409);
   return s;
 }
 

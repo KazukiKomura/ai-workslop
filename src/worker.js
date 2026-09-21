@@ -49,6 +49,7 @@ async function state(s,env){
  if(base==='reflection')Object.assign(result,{block:publicBlock('reflection',{k:K})});
  if(base==='perception')Object.assign(result,{position:index,...materials(c,map),sender:row.sender,initialText:row.initial_text,draftTitle:c.draftTitle,block:publicBlock('perception',map)});
  if(base==='recall')Object.assign(result,{block:publicBlock('recall',{k:K})});
+ if(base==='attitude')Object.assign(result,{block:publicBlock('attitude',{})});
  if(TERMINAL.includes(s.phase)){result.completionCode=s.completion_code;const camp=await campaignOf(env,s);if(camp)result.campaignLabel=camp.label;const cfg=await config(env);result.canRestart=!!camp||!!cfg.defaultCampaign;if(s.phase==='complete'){const kw=String(cfg.finalKeyword||'').trim()||(camp?camp.keyword:'');if(kw)result.keyword=kw}}
  return result;
 }

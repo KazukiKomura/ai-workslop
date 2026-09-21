@@ -8,7 +8,7 @@ test('v5 phase list: intro, three case loops, closing blocks',()=>{
   const l=phaseList();
   assert.equal(l[0],'intro');assert.equal(l[1],'materials_1');assert.equal(l.at(-1),'complete');
   assert.equal(l.filter(p=>p.startsWith('cognition_')).length,CASES_PER_PARTICIPANT);
-  assert.deepEqual(l.slice(-3),['reflection','recall','complete']);assert.deepEqual(l.slice(1,9),['materials_1','read_1','cognition_1','edit_1','post_1','trust_post_1','perception_1','responsibility_1']);
+  assert.deepEqual(l.slice(-4),['reflection','recall','attitude','complete']);assert.deepEqual(l.slice(1,9),['materials_1','read_1','cognition_1','edit_1','post_1','trust_post_1','perception_1','responsibility_1']);
   for(let i=0;i<l.length-1;i++)assert.equal(nextPhase(l[i],PROTOCOL_VERSION),l[i+1]);
   assert.equal(nextPhase('post',LEGACY_V4),undefined);
   assert.deepEqual(splitPhase('trust_post_2'),{base:'trust_post',index:2});assert.deepEqual(splitPhase('recall'),{base:'recall',index:null});

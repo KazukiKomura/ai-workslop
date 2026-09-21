@@ -95,12 +95,18 @@ export const measurement={
       {id:'disc_attention',type:'scale',min:1,max:7,unknown:false,ends:'1：まったく意識しなかった ／ 7：常に意識していた',text:'作業中、報告案の作成方法（生成AIを使ったかどうか）をどの程度意識していましたか。',source:'study (disclosure check)'},
       {id:'disc_influence',type:'scale',min:0,max:6,unknown:false,ends:'0：確認や修正を減らす方向 ／ 3：影響しなかった ／ 6：確認や修正を増やす方向',text:'報告案の作成方法について考えたことは、確認・修正の仕方にどのように影響しましたか。',source:'study (disclosure check)'},
       {id:'disc_free',type:'text',required:false,maxLength:2000,text:'報告案の作成方法について考えたことや、表示を見て感じたことがあれば書いてください。（任意・自由記述）',source:'study (disclosure check)'}
+    ]},
+    attitude:{title:'生成AIについて',instruction:'最後に、生成AI全般についてのあなたの考えを答えてください。',questions:[
+      q('aias_1','AIは私の生活をよくすると思う。',{source:'aias-4'}),
+      q('aias_2','AIは私の仕事をよくすると思う。',{source:'aias-4'}),
+      q('aias_3','私は将来、AI技術を使うと思う。',{source:'aias-4'}),
+      q('aias_4','AI技術は人類にとって良いものだと思う。',{source:'aias-4'})
     ]}
   }
 };
 // Phase order for v5 (k cases per participant). Per-case phases carry a 1-based index suffix.
 export const CASE_PHASES=['materials','read','cognition','edit','post','trust_post','perception','responsibility'];
-export function phaseList(k=CASES_PER_PARTICIPANT){const list=['intro'];for(let i=1;i<=k;i++)for(const p of CASE_PHASES)list.push(`${p}_${i}`);list.push('reflection','recall','complete');return list}
+export function phaseList(k=CASES_PER_PARTICIPANT){const list=['intro'];for(let i=1;i<=k;i++)for(const p of CASE_PHASES)list.push(`${p}_${i}`);list.push('reflection','recall','attitude','complete');return list}
 export const PHASES_V5=[...phaseList(),'withdrawn'];
 export const splitPhase=phase=>{const m=/^([a-z_]+?)(?:_(\d+))?$/.exec(phase);return {base:m?m[1]:phase,index:m&&m[2]?Number(m[2]):null}};
 export const isV5=version=>V5_VERSIONS.includes(version);
