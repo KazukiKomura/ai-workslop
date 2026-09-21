@@ -76,9 +76,9 @@ test('100 invitations; admin stimulus snapshot; campaign entry with keyword prec
   const st=await adm('stimulus');assert.equal(st.data.version,'recipient-20260921-v7.2');assert.equal(st.data.sequences.length,8);assert.equal(st.data.phases[1],'materials_1');
   const c=await adm('campaigns',{mode:'live',label:'yahoo test v5',keyword:'WORKSLOP',capacity:2});assert(c.data.url.includes('#entry='));
   const startEntry=async()=>request('/api/start',{entry:c.data.token,resumeToken:randomUUID()+randomUUID(),consent:true,meta:{gender:3,age:52}});
-  const a=await startEntry();assert.equal(a.status,200,JSON.stringify(a.data));assert(a.data.code);const b=await startEntry();assert.equal(b.status,200);assert.equal((await startEntry()).status,403);
+  const a=await startEntry();assert.equal(a.status,200,JSON.stringify(a.data));assert(a.data.code);const b=await startEntry();assert.equal(b.status,200);assert.equal((await startEntry()).status,200);
   assert.equal((await adm('campaign',{tokenHash:c.data.tokenHash,open:false})).status,200);assert.equal((await startEntry()).status,403);
-  const exported=(await all('sessions')).find(x=>x.id===a.data.sessionId);assert(['campaign:yahoo test v5','researcher:yahoo test v5'].includes(exported.invitation_label),exported.invitation_label);
+  const exported=(await all('sessions')).find(x=>x.id===a.data.sessionId);assert(exported.invitation_label==='campaign:yahoo test v5',exported.invitation_label);
 });
 
 test('open entry: top URL without code uses the default campaign; setting restored',async()=>{
@@ -92,14 +92,14 @@ test('open entry: top URL without code uses the default campaign; setting restor
   }finally{assert.equal((await adm('config',{defaultCampaign:before})).status,200)}
 });
 
-test('researcher IP: fresh start flag, test-mode sessions, leave clears the cookie; setting restored',async()=>{
+test('unified participation ignores legacy researcher IP; leave clears the cookie; setting restored',async()=>{
   const before=(await adm('status')).data.config;const camp=await adm('campaigns',{mode:'live',label:'researcher-ip check',capacity:0});
   try{assert.equal((await adm('config',{resetIps:'*',defaultCampaign:camp.data.tokenHash})).status,200);
-    const pub=await request('/api/config');assert.equal(pub.data.researcher,true);assert.equal(pub.data.resetIps,undefined);
+    const pub=await request('/api/config');assert.equal(pub.data.researcher,undefined);assert.equal(pub.data.resetIps,undefined);
     const a=await request('/api/start',{resumeToken:randomUUID()+randomUUID(),consent:true,meta:{gender:1,age:33}});assert.equal(a.status,200,JSON.stringify(a.data));
-    const sess=(await all('sessions')).find(x=>x.id===a.data.sessionId);assert.equal(sess.mode,'test');assert(sess.invitation_label.startsWith('researcher:'));
+    const sess=(await all('sessions')).find(x=>x.id===a.data.sessionId);assert.equal(sess.mode,'live');assert(sess.invitation_label.startsWith('campaign:'));
     const w=await act(a,{},{withdraw:true});assert.equal(w.data.phase,'withdrawn');assert.equal(w.data.canRestart,true);assert.equal(w.data.keyword,undefined);
     const l=await request('/api/leave',{},a.cookie);assert.equal(l.status,200);assert(String(l.cookie||'').startsWith('participant='));
-    assert.equal((await adm('config',{resetIps:''})).status,200);assert.equal((await request('/api/config')).data.researcher,false);
+    assert.equal((await adm('config',{resetIps:''})).status,200);assert.equal((await request('/api/config')).data.researcher,undefined);
   }finally{await adm('config',{resetIps:before.resetIps||'',defaultCampaign:before.defaultCampaign||''});await adm('campaign',{tokenHash:camp.data.tokenHash,open:false})}
 });

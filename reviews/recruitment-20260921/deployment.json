@@ -1,0 +1,23 @@
+{
+  "verifiedAt": "2026-09-21T06:24:18.272Z",
+  "url": "https://handoff-research.research-public.workers.dev/",
+  "explicitEntryUrl": "https://handoff-research.research-public.workers.dev/#entry=04c5b0a0-2396-46e0-9b72-c76659b7d0b5cac62f99",
+  "defaultCampaignMatches": true,
+  "protocol": "recipient-20260921-v7.2",
+  "casesPerParticipant": 4,
+  "allocation": "independent AI disclosure Bernoulli(0.5); all four content states within participant",
+  "appSideParticipantQuota": false,
+  "oneParticipantFlow": true,
+  "started": 0,
+  "completed": 0,
+  "assetHashes": {
+    "app.js": "b20df5b9e80f5e4078590c76fa0ea21d7440a77f0a4b23b7a45b528ae2e0dca0",
+    "admin.js": "2f5d06db6a49ec811403269c05276c66d3d27164c383ae9e1c0c8e14ad1161ef"
+  },
+  "missingConsentFields": [
+    "affiliation",
+    "operator",
+    "contact",
+    "retention"
+  ]
+}

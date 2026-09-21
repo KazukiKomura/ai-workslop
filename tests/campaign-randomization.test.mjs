@@ -33,13 +33,13 @@ test('shared entry: concurrent retries allocate one participant, no keyword/cond
  r.forEach(x=>assert.equal(x.status,200,JSON.stringify(x.data)));assert.equal(new Set(r.map(x=>x.data.sessionId)).size,1);
  const {results}=await db.prepare('SELECT * FROM sessions WHERE id=?').bind(r[0].data.sessionId).all();assert.equal(results.length,1);
  const rows=(await db.prepare('SELECT * FROM session_cases WHERE session_id=?').bind(results[0].id).all()).results;assert.equal(rows.length,4);assert.equal(new Set(rows.map(x=>x.case_id)).size,4);assert.equal(new Set(rows.map(x=>x.condition)).size,4);
- const plan=JSON.parse(results[0].plan_json);assert.equal(plan.allocation,'least-count-sequence-v2');assert(!('text'in plan.cases[0]));
+ const plan=JSON.parse(results[0].plan_json);assert.equal(plan.allocation,'bernoulli-disclosure-v1');assert.equal(plan.disclosureProbability,0.5);assert(!('text'in plan.cases[0]));
  assert(!('condition'in r[0].data));assert(!('disclosure'in r[0].data));assert(!('finalKeyword'in(await req('/api/config')).data));assert(!('keyword'in r[0].data));
  // Closed recruitment must not invalidate retries or resumption.
  await adm('campaign',{tokenHash:c.tokenHash,open:false});assert.equal((await req('/api/start',p)).data.sessionId,r[0].data.sessionId);assert.equal((await req('/api/start',payload(c.token))).status,403);
 });
 
-test('over 50 starts with attrition; stop new starts on 50 completions, preserve active participants',async()=>{
+test('over 50 starts and completions never stop recruitment; preserve active participants',async()=>{
  const c=await newCampaign(50),starts=[];
  for(let batch=0;batch<6;batch++){const ps=Array.from({length:10},()=>payload(c.token));const rs=await Promise.all(ps.map(start));rs.forEach((s,i)=>starts.push({s,p:ps[i]}));}
  assert.equal(new Set(starts.map(x=>x.s.data.sessionId)).size,60);
@@ -48,10 +48,10 @@ test('over 50 starts with attrition; stop new starts on 50 completions, preserve
  // This fixture changes completion status only in the isolated local database.
  await db.batch(starts.slice(5,55).map(x=>db.prepare("UPDATE sessions SET phase='complete' WHERE id=?").bind(x.s.data.sessionId)));
  status=(await adm('campaigns')).data.campaigns.find(x=>x.token_hash===c.tokenHash);assert.equal(status.completed,50);
- const blocked=await req('/api/start',payload(c.token));assert.equal(blocked.status,403);assert.match(blocked.data.error,/回答数/);
+ await db.prepare('UPDATE campaigns SET capacity=1,completion_target=1 WHERE token_hash=?').bind(c.tokenHash).run();const extra=await req('/api/start',payload(c.token));assert.equal(extra.status,200);
  const pending=starts.at(-1);assert.equal((await req('/api/start',pending.p)).data.sessionId,pending.s.data.sessionId);assert.equal((await req('/api/state',undefined,pending.s.cookie)).status,200);
  const withdrawn=(await req('/api/state',undefined,starts[0].s.cookie)).data;assert.equal(withdrawn.canRestart,true);
- const counts=(await adm('campaigns')).data.progress.filter(x=>x.campaign_hash===c.tokenHash);assert.equal(counts.reduce((a,x)=>a+x.n,0),60);assert.equal(counts.filter(x=>x.phase==='withdrawn').reduce((a,x)=>a+x.n,0),5);
+ const counts=(await adm('campaigns')).data.progress.filter(x=>x.campaign_hash===c.tokenHash);assert.equal(counts.reduce((a,x)=>a+x.n,0),61);assert.equal(counts.filter(x=>x.phase==='withdrawn').reduce((a,x)=>a+x.n,0),5);
 });
 
 test('full four-case path keeps assigned disclosure throughout and returns completion keyword only at end',async()=>{
@@ -67,12 +67,12 @@ test('full four-case path keeps assigned disclosure throughout and returns compl
   assert(!('keyword'in s.data));s=await action(s,a);
  }
  assert.equal(s.data.phase,'complete');assert.equal(reads,4);assert.equal(edits,4);assert.equal(s.data.keyword,'local-test-only');assert(s.data.completionCode);
- assert.equal((await req('/api/start',payload(c.token))).status,403);
+ assert.equal((await req('/api/start',payload(c.token))).status,200);
  assert.equal((await req('/api/start',p)).data.phase,'complete');
 });
 
 
-test('browser: shared entry needs no invitation code; admin shows completion target and arm progress',async()=>{
+test('browser: shared entry needs no invitation code; admin shows one flow and arm progress without participant quotas',async()=>{
  const browser=await chromium.launch({headless:true,channel:'chrome'});
  try{
   const origin=String(await mf.ready);const c=await newCampaign(50);
@@ -84,18 +84,36 @@ test('browser: shared entry needs no invitation code; admin shows completion tar
   await page.reload();await page.waitForFunction(()=>document.querySelector('#withdraw')&&!document.querySelector('#withdraw').hidden);
   const after=await page.evaluate(()=>fetch('/api/state').then(r=>r.json()));assert.equal(after.sessionId,before.sessionId);
   await page.goto(origin+'admin');await page.locator('#key').fill('local-campaign-test-key');await page.getByRole('button',{name:'ログイン',exact:true}).click();
-  await page.locator('#campaign-target').waitFor();assert.equal(await page.locator('#campaign-target').inputValue(),'50');assert.equal(await page.locator('#campaign-mode').count(),0);assert.equal(await page.locator('#mode').count(),0);await page.locator('#campaign-list table').waitFor();
-  assert.match(await page.locator('#campaign-list').innerText(),/開示あり/);assert.match(await page.locator('#campaign-list').innerText(),/完了目標/);
+  await page.locator('#campaign-label').waitFor();assert.equal(await page.locator('#campaign-target').count(),0);assert.equal(await page.locator('#campaign-capacity').count(),0);assert.equal(await page.locator('#campaign-mode').count(),0);assert.equal(await page.locator('#mode').count(),0);await page.locator('#campaign-list table').waitFor();
+  assert.match(await page.locator('#campaign-list').innerText(),/開示あり/);assert.doesNotMatch(await page.locator('#campaign-list').innerText(),/完了目標|開始上限/);
   await mkdir(new URL('../test-results/',import.meta.url),{recursive:true});await page.screenshot({path:new URL('../test-results/campaign-randomization-admin.png',import.meta.url).pathname,fullPage:true});
  }finally{await browser.close()}
 });
 
 
-test('one participant flow: former researcher IP cannot change mode or bypass the completion target',async()=>{
+test('one participant flow: former researcher IP cannot change mode; all participants follow the same flow',async()=>{
  await adm('config',{resetIps:'*'});const c=await newCampaign(1);
  const s=await req('/api/start',payload(c.token),'',false,{'cf-connecting-ip':'127.0.0.1'});assert.equal(s.status,200);assert.equal(s.data.mode,'live');
  assert(!('researcher'in(await req('/api/config')).data));
  await db.prepare("UPDATE sessions SET phase='complete' WHERE id=?").bind(s.data.sessionId).run();
- assert.equal((await req('/api/start',payload(c.token),'',false,{'cf-connecting-ip':'127.0.0.1'})).status,403);
- const status=(await adm('campaigns')).data.campaigns.find(x=>x.token_hash===c.tokenHash);assert.equal(status.started,1);assert.equal(status.completed,1);
+ assert.equal((await req('/api/start',payload(c.token),'',false,{'cf-connecting-ip':'127.0.0.1'})).status,200);
+ const status=(await adm('campaigns')).data.campaigns.find(x=>x.token_hash===c.tokenHash);assert.equal(status.started,2);assert.equal(status.completed,1);
+});
+
+test('50 simultaneous starts and 50 simultaneous event batches: no duplicate participants or missing logs',async()=>{
+ const c=await newCampaign(0);const ps=Array.from({length:50},()=>payload(c.token));
+ const began=performance.now();const started=await Promise.all(ps.map(p=>req('/api/start',p)));
+ started.forEach(s=>assert.equal(s.status,200,JSON.stringify(s.data)));assert.equal(new Set(started.map(s=>s.data.sessionId)).size,50);
+ const rows=(await db.prepare('SELECT sc.*,s.disclosure FROM session_cases sc JOIN sessions s ON s.id=sc.session_id JOIN invitations i ON i.code_hash=s.invitation_hash WHERE i.campaign_hash=?').bind(c.tokenHash).all()).results;
+ assert.equal(rows.length,200);
+ for(const s of started){const own=rows.filter(r=>r.session_id===s.data.sessionId);assert.equal(own.length,4);assert.equal(new Set(own.map(x=>x.case_id)).size,4);assert.equal(new Set(own.map(x=>x.condition)).size,4);}
+ const startWallMs=performance.now()-began;
+ const batches=started.map(s=>{const page=randomUUID();return {events:Array.from({length:100},(_,i)=>({id:randomUUID(),page,seq:i+1,phase:s.data.phase,type:'heartbeat',wall:new Date().toISOString(),mono:i,payload:{test:'local concurrency verification'}}))}});
+ const first=await Promise.all(started.map((s,i)=>req('/api/events',batches[i],s.cookie)));first.forEach(r=>{assert.equal(r.status,200,JSON.stringify(r.data));assert.equal(r.data.ack.length,100)});
+ const retried=await Promise.all(started.map((s,i)=>req('/api/events',batches[i],s.cookie)));retried.forEach(r=>assert.equal(r.status,200));
+ const count=await db.prepare('SELECT count(*) AS n FROM events e JOIN sessions s ON s.id=e.session_id JOIN invitations i ON i.code_hash=s.invitation_hash WHERE i.campaign_hash=?').bind(c.tokenHash).first();assert.equal(count.n,5000);
+ const resumed=await Promise.all(ps.map(p=>req('/api/start',p)));resumed.forEach((r,i)=>{assert.equal(r.status,200);assert.equal(r.data.sessionId,started[i].data.sessionId)});
+ const actual=await db.prepare('SELECT count(*) AS n FROM sessions s JOIN invitations i ON i.code_hash=s.invitation_hash WHERE i.campaign_hash=?').bind(c.tokenHash).first();assert.equal(actual.n,50);
+ const result={checkedAt:new Date().toISOString(),environment:'isolated local Miniflare + D1, not production load or performance measurement',simultaneousStarts:50,successfulStarts:50,uniqueParticipants:50,caseRecords:200,uniqueEvents:count.n,retriedEvents:5000,successfulResumes:50,localStartWallMs:Math.round(startWallMs),localTotalWallMs:Math.round(performance.now()-began)};
+ await mkdir(new URL('../reviews/recruitment-20260921/',import.meta.url),{recursive:true});await writeFile(new URL('../reviews/recruitment-20260921/concurrency-50.json',import.meta.url),JSON.stringify(result,null,2));console.log(JSON.stringify(result));
 });
