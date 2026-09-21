@@ -27,7 +27,7 @@ function textPatch(a,b){let start=0;while(start<a.length&&start<b.length&&a[star
 function rich(text){const frag=document.createDocumentFragment();for(const part of String(text).split(/(\*\*[^*]+\*\*)/)){if(/^\*\*[^*]+\*\*$/.test(part))frag.append(h('strong',{text:part.slice(2,-2)}));else if(part)frag.append(document.createTextNode(part))}return frag}
 function paragraphs(values){return values.map(text=>h('p',{text}))}
 function card(...c){return h('section',{class:'card'},...c)}
-const UI_VERSION='questionnaire-20260921-v7.2';
+const UI_VERSION='questionnaire-20260921-v7.3';
 function bullets(items){return h('ul',{class:'instruction-list'},items.map(text=>h('li',{text})))}
 function block(title,...body){return h('section',{class:'instruction-block'},h('h2',{text:title}),...body)}
 // Question renderers driven by the server-provided block definition.
@@ -42,7 +42,7 @@ function blockForm(blockDef,extra=[],button='次へ',before=[]){const f=h('form'
 function introScreen(){
  const bg=state.block;const k=state.casesTotal||3;
  const panels=[
- h('section',{'data-instruction-step':'0'},h('h2',{text:'あなたの役割'}),h('p',{class:'notice compact',text:state.notice}),h('p',{class:'instruction-lead'},rich(`この調査では、${k} 件の案件を順に担当します。案件ごとに、別の同僚が作成した報告案を受け取り、**最終確認をして上司へ提出します。**`)),h('p',{},rich(state.role)),h('p',{class:'muted',text:'案件ごとに、上司からの依頼を最初に見せます。同僚（'+(state.senders||[]).map(x=>x+'さん').join('、')+'）とは、どの人とも今回が初めての仕事です。'}),h('p',{class:'notice compact warning',text:state.workRule})),
+ h('section',{'data-instruction-step':'0'},h('h2',{text:'あなたの役割'}),h('p',{class:'notice compact',text:state.notice}),h('p',{class:'instruction-lead'},rich(`この調査では、${k} 件の案件を順に担当します。案件ごとに、別の同僚が作成した報告案を受け取り、**最終確認をして上司へ提出します。**`)),h('p',{},rich(state.role)),h('p',{class:'muted',text:'案件ごとに、上司からの依頼を最初に見せます。同僚（'+(state.senders||[]).map(x=>x+'さん').join('、')+'）とは、どの人とも今回が初めての仕事です。'}),h('p',{class:'notice compact warning',text:state.workRule}),h('p',{class:'notice compact warning'},h('strong',{text:'開始から 60 分以内に最後まで終えてください。'}))),
  h('section',{'data-instruction-step':'1'},h('h2',{text:bg.title}),h('p',{class:'muted',text:bg.instruction}),...bg.questions.map(renderQ))
  ];
  const stepNames=['役割','事前の質問'];
@@ -127,7 +127,9 @@ async function startScreen(){const cfg=await api('config');const hash=new URLSea
   h('h1',{text:cfg.title||'文書の引継ぎと確認作業に関する調査'}),
   h('p',{class:'instruction-lead',text:'本調査は研究の一環として行うものです。このたびは調査にご協力いただき、誠にありがとうございます。'}),
   h('p',{text:'このページでは、調査の概要、参加の自由、予想される負担、データの取り扱い、同意事項について説明します。内容をご確認いただき、参加に同意される場合のみ次のページへお進みください。'}),
-  sec('研究の概要',dl([['研究の目的','業務で文書を引き継いだとき、受け取った側がその文書をどのように読み、判断し、仕上げるかを調べます。'],['調査内容','4 件の案件について、同僚から受け取った短い報告案を読み、その内容を評価したうえで、必要に応じて修正して提出していただきます。各案件の前後と最後に、いくつかの質問に回答していただきます。'],['回答の考え方','本調査には正解・不正解はありません。報告案や資料を読んで感じたこと、判断したことに基づいて、できるだけ普段どおりに回答してください。回答や提出内容の良し悪しで報酬が減ることはありません。'],['所要時間','おおよそ 30〜60 分程度です。'],['報酬',cfg.reward||'募集案内に記載した条件に従います。']])),
+  h('p',{class:'notice warning'},h('strong',{text:'制限時間は 60 分です。開始から 60 分以内に最後まで終えてください。'})),
+  h('p',{class:'notice warning'},h('strong',{text:'この調査は、開始から 60 分以内に最後まで終えてください。途中で長く離れず、続けて回答できるときに始めてください。'})),
+  sec('研究の概要',dl([['研究の目的','業務で文書を引き継いだとき、受け取った側がその文書をどのように読み、判断し、仕上げるかを調べます。'],['調査内容','4 件の案件について、同僚から受け取った短い報告案を読み、その内容を評価したうえで、必要に応じて修正して提出していただきます。各案件の前後と最後に、いくつかの質問に回答していただきます。'],['回答の考え方','本調査には正解・不正解はありません。報告案や資料を読んで感じたこと、判断したことに基づいて、できるだけ普段どおりに回答してください。回答や提出内容の良し悪しで報酬が減ることはありません。'],['所要時間','おおよそ 30〜60 分程度です。開始から 60 分以内に終えてください。'],['報酬',cfg.reward||'募集案内に記載した条件に従います。']])),
   sec('参加の自由と中止について',h('p',{text:'本調査への参加は、参加者ご本人の自由意思によるものです。参加に同意した後でも、途中で参加を中止することができます。途中で中止した場合でも、不利益を受けることはありません。不快感、疲労、負担を感じた場合には、無理をせず中止してください。'})),
   sec('予想される負担・危険性',h('p',{text:'本調査では、報告案と資料を読み、質問に回答し、必要に応じて文章を修正していただきます。身体的な危険性は想定されません。読解や入力により、軽度の疲労や退屈さを覚える可能性があります。その場合は、いつでも参加を中止できます。'}),h('p',{class:'notice compact',text:'調査中は、このページを一つのタブで開いてください。通信が途切れた場合は、同じブラウザで再読み込みすると続きから再開できます。確定した提出や回答は、前の画面に戻って変更することはできません。'})),
   sec('推奨環境・免責事項',h('p',{text:'本調査は、パソコンの最新版ブラウザ（Chrome、Safari、Edge、Firefox）での参加を推奨します。所要時間が長く、文章の修正を行うため、スマートフォンでの参加は推奨しません。'}),h('p',{text:'広告ブロッカーやコンテンツブロッカーなどの拡張機能・ブラウザ機能、企業や学校のネットワークによる通信制限、通信の切断などにより、回答の保存や画面の進行ができない場合があります。その場合は、当該機能を一時的に無効にするか、別のブラウザで参加リンクを開き直してください。'}),h('p',{text:'通信環境、端末、ブラウザの設定に起因して回答を完了できなかった場合や、それにより生じた不利益について、研究者は責任を負いかねます。報酬の扱いは募集案内に記載した条件に従います。'})),

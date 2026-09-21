@@ -186,3 +186,5 @@ Cloudflare version: `a41853c4-00d4-4dbf-922d-95b3090d3876`。
 2026-09-21：自作項目の 0〜10 尺度（effort_total、belief、disc_confidence、disc_attention）を 1〜7 の 7 件法に変更。0〜6 の影響方向項目は 7 段階のまま。NASA-TLX の 0〜100 は既存尺度のため維持。Cloudflare version `22745055-780e-40f9-8b3c-948a1ad9daab`。
 
 2026-09-21：最後のブロックの後に AIAS-4（Grassini 2023、生成AI への一般的態度、4 項目、7 件法）を共変量として追加。CSV は `attitude.aias_1〜4`。Cloudflare version `80f04047-b7f5-4584-aecb-9f7aea55306a`。
+
+2026-09-21：表紙の冒頭に「制限時間は 60 分です。開始から 60 分以内に最後まで終えてください。」を太字で 1 行追加。Cloudflare version `af8905cc-9da7-4f05-ad00-e5710cc84932`。共有リンクは DB 上の募集枠トークンで決まり、配備では変わらない。
