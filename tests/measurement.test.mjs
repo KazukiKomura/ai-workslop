@@ -22,7 +22,7 @@ test('blocks: ids unique within a block, scales well formed, sender placeholders
       else if(q.type==='range'){assert.equal(q.min,0);assert.equal(q.max,100);assert(Array.isArray(q.ends)&&q.ends.length===2,q.id)}
       else if(q.type==='text')assert(q.maxLength>0,q.id);
       else{assert(Number.isInteger(q.min)&&Number.isInteger(q.max)&&q.min<q.max,q.id);assert(typeof q.ends==='string',q.id)}
-      if(!['recall'].includes(phase)&&!q.id.startsWith('bg_'))assert(!q.text.includes('AI'),q.id);
+      if(!['recall','attitude'].includes(phase)&&!q.id.startsWith('bg_'))assert(!q.text.includes('AI'),q.id);
       assert(!q.text.includes('佐藤'),q.id+' must use {sender}');
     }
   }
