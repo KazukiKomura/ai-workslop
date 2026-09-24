@@ -1,12 +1,11 @@
 import cases from './cases.js';
-import {PROTOCOL_VERSION as VERSION, measurement, isV5, nextPhase, PHASES_V5, phaseList, splitPhase, scoringNotes, CASES_PER_PARTICIPANT as K, SENDERS} from './measurement.js';
+import {PROTOCOL_VERSION as VERSION, measurement, isV5, nextPhase, PHASES_V5, phaseList, splitPhase, scoringNotes, CASES_PER_PARTICIPANT as K, SENDERS, READ_GATE_SECONDS, TIME_LIMIT_MINUTES, DURATION_TEXT} from './measurement.js';
 const TERMINAL=['complete','withdrawn','screened_out'];
 const LEGACY_PHASES=['intro','read','burden1','edit','post','responsibility','repair_appraisal','recall','manipulation','cognition','trust_post','understanding','perception'];
-const STATES=cases.conditions; // baseline, missing_info, off_focus, overreach
-// Complete within-participant design: every participant meets all four content states once, in a Williams (carryover-balanced) order.
-const WILLIAMS=[[0,1,3,2],[1,2,0,3],[2,3,1,0],[3,0,2,1]]; // each state once per position; every ordered pair of adjacent states exactly once across rows
-const SEQUENCES=[];for(const disclosure of ['disclosed','undisclosed'])for(let r=0;r<WILLIAMS.length;r++)SEQUENCES.push({disclosure,row:r});
-function permutations(a){if(a.length<=1)return [a];const out=[];a.forEach((x,i)=>{for(const p of permutations([...a.slice(0,i),...a.slice(i+1)]))out.push([x,...p])});return out}
+const STATES=cases.conditions; // baseline, missing_info, off_focus, source_deviation
+// v8: between-participants design, one case per participant. Disclosure: fair coin. Content state: least started within the disclosure group. Theme: least used within state x disclosure.
+const SEQUENCES=[];for(const disclosure of ['disclosed','undisclosed'])for(const state of STATES)SEQUENCES.push({disclosure,state});
+const gate=env=>{const v=Number(env?.READ_GATE_SECONDS);return Number.isFinite(v)&&v>=0?v:READ_GATE_SECONDS};
 const enc=new TextEncoder();
 const sha=async s=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',enc.encode(s)))].map(b=>b.toString(16).padStart(2,'0')).join('');
 const random=()=>crypto.randomUUID();
@@ -27,6 +26,8 @@ const available=(c,baseId)=>{const b=c.bases.find(x=>x.id===baseId)||c.bases[0];
 const fill=(text,map)=>String(text).replace(/\{(\w+)\}/g,(_,k)=>map[k]??'');
 function readcheckFor(rows,index){const cur=rows[index-1].case_id;const inPlan=new Set(rows.map(r=>r.case_id));const order=cases.cases.map(c=>c.id);const pick=[cur,...order.filter(id=>!inPlan.has(id)),...order.filter(id=>inPlan.has(id)&&id!==cur)].slice(0,4);const ids=order.filter(id=>pick.includes(id));const options=ids.map(id=>caseById(id).title);return {question:{id:'readcheck',type:'choice',text:'いま読んだ報告案は、何についての報告案でしたか。',options},answer:ids.indexOf(cur)}}
 function publicBlock(base,map){const b=measurement.blocks[base];if(!b)return null;return {phase:base,title:fill(b.title,map),instruction:fill(b.instruction,map),questions:b.questions.map(({source,reverse,...q})=>({...q,text:fill(q.text,map)}))}}
+// Factual manipulation checks: case-specific wording (cases.js fmc), keyed answers by content condition (cases.common.fmcKeyed); asked at the top of the perception block about the received draft.
+function fmcFor(rows,index){const row=rows[index-1];const c=caseById(row.case_id);return {questions:(c.fmc||[]).map(q=>({id:q.id,type:'choice',text:q.text,options:cases.common.fmcOptions})),keyed:cases.common.fmcKeyed[row.condition]||{}}}
 const materials=(c,map={})=>({request:{...c.request,lead:fill(c.request.lead||'',map)},terms:c.terms,sources:c.sources,caseTitle:c.title,domain:c.domain,caseRole:c.role});
 const precheckFor=idx=>cases.common.precheck;
 async function loadCases(env,s){return (await env.DB.prepare('SELECT * FROM session_cases WHERE session_id=? ORDER BY idx').bind(s.id).all()).results}
@@ -38,16 +39,16 @@ async function state(s,env){
  const plan=JSON.parse(s.plan_json||'{}');const rows=await loadCases(env,s);const {base,index}=splitPhase(s.phase);
  const disclosure=s.disclosure==='disclosed'?cases.common.disclosure.present:'';
  const row=index?rows[index-1]:null;const c=row?caseById(row.case_id):null;const map=row?{sender:row.sender,title:c.title,position:index,domain:c.domain}:{};
- if(base==='intro')Object.assign(result,{notice:cases.common.notice,role:cases.common.role,workRule:cases.common.workRule,senders:plan.senders||SENDERS.slice(0,K),block:publicBlock('background',{domain:cases.cases.map(x=>x.domain).filter((v,i,a)=>a.indexOf(v)===i).join('・')})});
+ if(base==='intro')Object.assign(result,{notice:cases.common.notice,role:cases.common.role,workRule:cases.common.workRule,auditNotice:cases.common.auditNotice||'',timeLimitMinutes:TIME_LIMIT_MINUTES,senders:plan.senders||SENDERS.slice(0,K),block:publicBlock('background',{domain:cases.cases.map(x=>x.domain).filter((v,i,a)=>a.indexOf(v)===i).join('・')})});
  if(base==='materials')Object.assign(result,{position:index,...materials(c,map),sender:row.sender,precheck:precheckFor(index).map(({question,options})=>({question:fill(question,map),options:options.map(o=>fill(o,map))}))});
- if(base==='read')Object.assign(result,{position:index,...materials(c,map),sender:row.sender,handoff:fill(c.handoff,map),disclosureText:disclosure,draftTitle:c.draftTitle,initialText:row.initial_text,readInstruction:cases.common.readInstruction});
+ if(base==='read')Object.assign(result,{position:index,...materials(c,map),sender:row.sender,handoff:fill(c.handoff,map),disclosureText:disclosure,draftTitle:c.draftTitle,initialText:row.initial_text,readInstruction:cases.common.readInstruction,readGateSeconds:gate(env),readGateNote:cases.common.readGateNote||''});
  if(base==='cognition'){const blk=publicBlock('cognition',map);blk.questions=[readcheckFor(rows,index).question,...blk.questions];Object.assign(result,{position:index,...materials(c,map),sender:row.sender,disclosureText:disclosure,draftTitle:c.draftTitle,initialText:row.initial_text,block:blk})}
  if(base==='edit')Object.assign(result,{position:index,...materials(c,map),sender:row.sender,handoff:fill(c.handoff,map),disclosureText:disclosure,draftTitle:c.draftTitle,initialText:row.initial_text,draftText:row.draft_text,draftSeq:row.draft_seq,editInstruction:cases.common.editInstruction});
  if(base==='post')Object.assign(result,{position:index,caseTitle:c.title,block:publicBlock('post',map)});
  if(base==='trust_post')Object.assign(result,{position:index,caseTitle:c.title,sender:row.sender,block:publicBlock('trust_post',map)});
  if(base==='responsibility')Object.assign(result,{position:index,caseTitle:c.title,sender:row.sender,block:publicBlock('responsibility',map)});
  if(base==='reflection')Object.assign(result,{block:publicBlock('reflection',{k:K})});
- if(base==='perception')Object.assign(result,{position:index,...materials(c,map),sender:row.sender,initialText:row.initial_text,draftTitle:c.draftTitle,block:publicBlock('perception',map)});
+ if(base==='perception'){const blk=publicBlock('perception',map);const f=fmcFor(rows,index);blk.questions=[...f.questions,...blk.questions];blk.fmcInstruction=cases.common.fmcInstruction||'';Object.assign(result,{position:index,...materials(c,map),sender:row.sender,initialText:row.initial_text,draftTitle:c.draftTitle,block:blk})}
  if(base==='recall')Object.assign(result,{block:publicBlock('recall',{k:K})});
  if(base==='attitude')Object.assign(result,{block:publicBlock('attitude',{})});
  if(TERMINAL.includes(s.phase)){result.completionCode=s.completion_code;const camp=await campaignOf(env,s);if(camp)result.campaignLabel=camp.label;const cfg=await config(env);result.canRestart=!!camp||!!cfg.defaultCampaign;if(s.phase==='complete'){const kw=String(cfg.finalKeyword||'').trim()||(camp?camp.keyword:'');if(kw)result.keyword=kw}}
@@ -73,7 +74,10 @@ async function transition(r,env,s,b){
  if(TERMINAL.includes(s.phase))fail('この参加は終了しています。',409);
  if(!isV5(s.protocol_version))fail('この参加は旧版で作成されたため再開できません。新しい参加リンクをお使いください。',409);
  const rows=await loadCases(env,s);const a=b.answers||{};let next,attempts=s.attempts,completed=s.completed_at;const {base,index}=splitPhase(s.phase);const extra=[];
- if(b.withdraw===true){next='withdrawn';completed=now()}else{validate(s.phase,a,rows);if(base==='cognition'){const rc=readcheckFor(rows,index);number(a.readcheck,0,rc.question.options.length-1);a.readcheck_correct=a.readcheck===rc.answer?1:0}next=nextPhase(s.phase,s.protocol_version);
+ if(b.withdraw===true){next='withdrawn';completed=now()}else{validate(s.phase,a,rows);if(base==='cognition'){const rc=readcheckFor(rows,index);number(a.readcheck,0,rc.question.options.length-1);a.readcheck_correct=a.readcheck===rc.answer?1:0}
+  if(base==='read'){const g=gate(env);if(g>0){const entered=await env.DB.prepare('SELECT received_at FROM actions WHERE session_id=? AND to_phase=? ORDER BY received_at LIMIT 1').bind(s.id,s.phase).first();if(entered){const elapsed=(Date.now()-new Date(entered.received_at).getTime())/1000;if(elapsed<g-2)fail(`報告案を読む時間を確保しています。あと ${Math.ceil(g-elapsed)} 秒ほどお待ちください。`,400);a.read_seconds=Math.round(elapsed)}}}
+  if(base==='perception'){const f=fmcFor(rows,index);for(const q of f.questions){number(a[q.id],0,q.options.length-1);a[q.id+'_correct']=cases.common.fmcOptions[a[q.id]]===f.keyed[q.id]?1:0}}
+  next=nextPhase(s.phase,s.protocol_version);
   if(base==='materials'){attempts++;const pre=precheckFor(index);if(!a.knowledge.every((v,i)=>v===pre[i].answer))next=s.phase}
   if(base==='edit')extra.push(env.DB.prepare('UPDATE session_cases SET submitted_text=?,draft_text=?,submitted_at=? WHERE session_id=? AND idx=?').bind(a.text,a.text,now(),s.id,index));
   if(TERMINAL.includes(next))completed=now();}
@@ -104,27 +108,22 @@ async function exportPage(env,url){
  const {results}=await env.DB.prepare(sql).bind(Number(cursor),...params,limit).all();return {table,rows:results,next:results.length===limit?String(results.at(-1)[table==='events'?'id':'cursor_id']):null};
 }
 async function allocate(env,mode,campaignHash=null){
- // 1. AI disclosure: independent fair draw per participant (p=0.5), never adjusted for starts, completions or dropouts (decision 2026-09-21).
+ // 1. AI disclosure: independent fair draw per participant (p=0.5), never adjusted for starts, completions or dropouts (decision 2026-09-21, kept in v8).
  const disclosure=integer(2)===0?'disclosed':'undisclosed';
- // 2. Williams row: least started count within the drawn disclosure group, this campaign and protocol version; random tie-break.
+ // 2. Content state: least started count within the drawn disclosure group, this campaign and protocol version; random tie-break.
  const seqCounts=(await env.DB.prepare('SELECT s.sequence,count(*) AS n FROM sessions s JOIN invitations i ON i.code_hash=s.invitation_hash WHERE s.mode=? AND i.campaign_hash IS ? AND s.protocol_version=? AND s.sequence IS NOT NULL GROUP BY s.sequence').bind(mode,campaignHash,VERSION).all()).results;
- const n=i=>seqCounts.find(x=>x.sequence===i)?.n||0;const eligible=SEQUENCES.map((seq,i)=>({seq,i})).filter(x=>x.seq.disclosure===disclosure);const least=Math.min(...eligible.map(x=>n(x.i)));const pool=eligible.filter(x=>n(x.i)===least);const seqIndex=pool[integer(pool.length)].i;const seq=SEQUENCES[seqIndex];
- const states=WILLIAMS[seq.row].map(i=>STATES[i]);
- // 2. Themes: least-used within this campaign/protocol (random tie-break).
- const usage=(await env.DB.prepare('SELECT sc.case_id,sc.base_id,sc.idx,sc.condition,s.disclosure,count(*) AS n FROM session_cases sc JOIN sessions s ON s.id=sc.session_id JOIN invitations i ON i.code_hash=s.invitation_hash WHERE s.mode=? AND i.campaign_hash IS ? AND s.protocol_version=? GROUP BY sc.case_id,sc.base_id,sc.idx,sc.condition,s.disclosure').bind(mode,campaignHash,VERSION).all()).results;
- const themeN=id=>usage.filter(x=>x.case_id===id).reduce((a,x)=>a+x.n,0);
- const chosen=shuffle(cases.cases.map(c=>c.id)).sort((a,b)=>themeN(a)-themeN(b)).slice(0,K);
- // 3. Theme -> position assignment: minimise theme x condition counts within this disclosure group (primary) and theme x position counts (secondary).
- const cell=(id,st)=>usage.filter(x=>x.case_id===id&&x.condition===st&&x.disclosure===seq.disclosure).reduce((a,x)=>a+x.n,0);
- const pos=(id,p)=>usage.filter(x=>x.case_id===id&&x.idx===p).reduce((a,x)=>a+x.n,0);
- let best=null,bestCost=Infinity;for(const perm of shuffle(permutations(chosen))){let cost=0;perm.forEach((id,p)=>{cost+=10*cell(id,states[p])+pos(id,p+1)});if(cost<bestCost){bestCost=cost;best=perm}}
+ const n=i=>seqCounts.find(x=>x.sequence===i)?.n||0;const eligible=SEQUENCES.map((seq,i)=>({seq,i})).filter(x=>x.seq.disclosure===disclosure);const least=Math.min(...eligible.map(x=>n(x.i)));const pool=eligible.filter(x=>n(x.i)===least);const seqIndex=pool[integer(pool.length)].i;const seq=SEQUENCES[seqIndex];const st=seq.state;
+ // 3. Theme: least used within state x disclosure (primary) and overall (secondary), this campaign/protocol; random tie-break.
+ const usage=(await env.DB.prepare('SELECT sc.case_id,sc.base_id,sc.condition,s.disclosure,count(*) AS n FROM session_cases sc JOIN sessions s ON s.id=sc.session_id JOIN invitations i ON i.code_hash=s.invitation_hash WHERE s.mode=? AND i.campaign_hash IS ? AND s.protocol_version=? GROUP BY sc.case_id,sc.base_id,sc.condition,s.disclosure').bind(mode,campaignHash,VERSION).all()).results;
+ const cell=id=>usage.filter(x=>x.case_id===id&&x.condition===st&&x.disclosure===disclosure).reduce((a,x)=>a+x.n,0);const themeN=id=>usage.filter(x=>x.case_id===id).reduce((a,x)=>a+x.n,0);
+ const chosen=shuffle(cases.cases.map(c=>c.id)).sort((a,b)=>cell(a)-cell(b)||themeN(a)-themeN(b))[0];
  // 4. Base: least used within the theme.
- const plan={allocation:'bernoulli-disclosure-v1',disclosureProbability:0.5,sequence:seqIndex,disclosure:seq.disclosure,row:seq.row,states,cases:[],senders:SENDERS.slice(0,K)};
- for(let i=0;i<K;i++){const c=caseById(best[i]);const baseN=b=>usage.filter(x=>x.case_id===c.id&&x.base_id===b).reduce((a,x)=>a+x.n,0);const base=shuffle(c.bases.slice()).sort((x,y)=>baseN(x.id)-baseN(y.id))[0];const st=states[i];if(!base.versions[st])fail('刺激が未登録です。',500);plan.cases.push({idx:i+1,case_id:c.id,base_id:base.id,condition:st,sender:plan.senders[i],text:base.versions[st].paragraphs.join('\n\n')})}
- return plan;
+ const c=caseById(chosen);const baseN=b=>usage.filter(x=>x.case_id===c.id&&x.base_id===b).reduce((a,x)=>a+x.n,0);const base=shuffle(c.bases.slice()).sort((x,y)=>baseN(x.id)-baseN(y.id))[0];if(!base.versions[st])fail('刺激が未登録です。',500);
+ const senders=SENDERS.slice(0,K);
+ return {allocation:'between-v8',disclosureProbability:0.5,sequence:seqIndex,disclosure,states:[st],readGateSeconds:gate(env),senders,cases:[{idx:1,case_id:c.id,base_id:base.id,condition:st,sender:senders[0],text:base.versions[st].paragraphs.join('\n\n')}]};
 }
 async function api(r,env,url){const path=url.pathname;
- if(path==='/api/config'&&r.method==='GET'){const c=await config(env);const {resetIps,finalKeyword,...pub}=c;return json(pub)}
+ if(path==='/api/config'&&r.method==='GET'){const c=await config(env);const {resetIps,finalKeyword,...pub}=c;return json({...pub,casesPerParticipant:K,timeLimitMinutes:TIME_LIMIT_MINUTES,durationText:DURATION_TEXT,readGateSeconds:gate(env)})}
  if(path==='/api/leave'&&r.method==='POST')return json({ok:true},200,{'set-cookie':setCookie('participant','',0)});
  if(path==='/api/admin/login'&&r.method==='POST'){const b=await body(r);if(!env.ADMIN_KEY||typeof b.key!=='string'||await sha(b.key)!==await sha(env.ADMIN_KEY))fail('管理キーが一致しません。',401);return json({ok:true},200,{'set-cookie':setCookie('research_admin',await sha('admin-session:'+env.ADMIN_KEY),28800)})}
  if(path.startsWith('/api/admin/')){await admin(r,env);
@@ -156,10 +155,10 @@ async function api(r,env,url){const path=url.pathname;
  if(!c.enrollmentOpen)fail('現在、新規参加の受付を停止しています。',403);
  if(!b.meta||typeof b.meta!=='object')fail('参加者情報を入力してください。');number(b.meta.gender,0,3);number(b.meta.age,18,99);const meta={viewport:b.meta?.viewport||null,language:String(b.meta?.language||'').slice(0,30),timezone:String(b.meta?.timezone||'').slice(0,100),gender:b.meta.gender,age:b.meta.age};
  const id=random(),time=now(),hash=await sha(JSON.stringify(cases));const plan=await allocate(env,inv.mode,inv.campaign_hash||null);const {resetIps:unusedLegacyIp,...consentConfig}=c;const consent={...consentConfig,consentedAt:time,version:VERSION,logging:'編集欄内の入力・削除・変換・選択・コピー貼付の操作、資料の開閉・スクロール、画面の表示状態、回答変更、提出文書を記録。氏名・メール・IP・他サイト操作はアプリで保存しない。'};
- const stmts=[env.DB.prepare('INSERT INTO sessions(id,token_hash,invitation_hash,mode,phase,created_at,updated_at,assigned_at,case_id,condition,disclosure,sequence,plan_json,protocol_version,stimulus_hash,completion_code,question_order,consent_json,meta_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)').bind(id,tokenHash,codeHash,inv.mode,'intro',time,time,time,plan.cases[0].case_id,`williams${plan.row}`,plan.disclosure,plan.sequence,JSON.stringify({...plan,cases:plan.cases.map(({text,...x})=>x)}),VERSION,hash,random().slice(0,8).toUpperCase(),'[]',JSON.stringify(consent),JSON.stringify(meta)),
+ const stmts=[env.DB.prepare('INSERT INTO sessions(id,token_hash,invitation_hash,mode,phase,created_at,updated_at,assigned_at,case_id,condition,disclosure,sequence,plan_json,protocol_version,stimulus_hash,completion_code,question_order,consent_json,meta_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)').bind(id,tokenHash,codeHash,inv.mode,'intro',time,time,time,plan.cases[0].case_id,plan.states[0],plan.disclosure,plan.sequence,JSON.stringify({...plan,cases:plan.cases.map(({text,...x})=>x)}),VERSION,hash,random().slice(0,8).toUpperCase(),'[]',JSON.stringify(consent),JSON.stringify(meta)),
   env.DB.prepare('UPDATE invitations SET session_id=? WHERE code_hash=? AND session_id IS NULL').bind(id,codeHash)];
  for(const pc of plan.cases)stmts.push(env.DB.prepare('INSERT INTO session_cases(session_id,idx,case_id,base_id,condition,sender,initial_text,draft_text,draft_seq,version_hash) VALUES(?,?,?,?,?,?,?,?,0,?)').bind(id,pc.idx,pc.case_id,pc.base_id,pc.condition,pc.sender,pc.text,pc.text,await sha(pc.text)));
- stmts.push(env.DB.prepare('INSERT OR IGNORE INTO versions VALUES(?,?,?,?)').bind(VERSION,hash,JSON.stringify({cases,measurement,measurementHash:await sha(JSON.stringify(measurement)),version:VERSION,allocation:`k=${K} cases per participant; all four content states within, disclosure between; four Williams orders x disclosure; AI disclosure independent Bernoulli(0.5); Williams rows balanced within disclosure/campaign/protocol; no completion-dependent reallocation; themes balanced by usage and theme x state x disclosure; see phases for questionnaire schedule`,phases:phaseList(),scoring:scoringNotes()}),time));
+ stmts.push(env.DB.prepare('INSERT OR IGNORE INTO versions VALUES(?,?,?,?)').bind(VERSION,hash,JSON.stringify({cases,measurement,measurementHash:await sha(JSON.stringify(measurement)),version:VERSION,allocation:`v8: k=${K} case per participant; content state (${STATES.join('|')}) and AI disclosure both between participants; AI disclosure independent Bernoulli(0.5); content state least-started within disclosure/campaign/protocol; theme least-used within state x disclosure; base least-used within theme; no completion-dependent reallocation; read gate ${gate(env)} s; factual MCs at the top of perception`,phases:phaseList(),scoring:scoringNotes()}),time));
  try{await env.DB.batch(stmts)}catch(e){const retried=await env.DB.prepare('SELECT * FROM sessions WHERE token_hash=? AND invitation_hash=?').bind(tokenHash,codeHash).first();if(!retried)throw e;return json({...await state(retried,env),code:b.code},200,{'set-cookie':setCookie('participant',b.resumeToken)})}
  return json({...await state(await env.DB.prepare('SELECT * FROM sessions WHERE id=?').bind(id).first(),env),code:b.code},200,{'set-cookie':setCookie('participant',b.resumeToken)});}
  const s=await session(r,env);

@@ -1,4 +1,5 @@
 import {PROTOCOL_VERSION} from '../src/measurement.js';
+import cases from '../src/cases.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
@@ -20,7 +21,7 @@ async function runCase(s,i,opts={}){
   const submitted=opts.editText?initial+'\n'+opts.editText:initial;s=await step(s,{text:submitted});assert.equal(s.data.phase,`post_${i}`);assert.equal((await request('/api/draft',{text:'late',seq:3},s.cookie)).status,409);
   assert.equal((await act(s,fillBlock(s.data.block,{tlx_md:101}))).status,400);
   s=await step(s,fillBlock(s.data.block,{effort_total:3}));assert.equal(s.data.phase,`trust_post_${i}`);assert.equal(s.data.block.questions.length,4);
-  s=await step(s,fillBlock(s.data.block,{tr_1:3}));assert.equal(s.data.phase,`perception_${i}`);assert(s.data.initialText);assert(!('disclosureText'in s.data));assert.equal(s.data.block.questions.length,9);
+  s=await step(s,fillBlock(s.data.block,{tr_1:3}));assert.equal(s.data.phase,`perception_${i}`);assert(s.data.initialText);assert(!('disclosureText'in s.data));assert.equal(s.data.block.questions.length,12);assert.deepEqual(s.data.block.questions.slice(0,3).map(q=>q.id),['fmc_info','fmc_policy','fmc_accuracy']);assert.deepEqual(s.data.block.questions[0].options,['はい','いいえ','覚えていない']);assert(!JSON.stringify(s.data.block.questions).includes('いいえ"}'.repeat(0)+'keyed'));assert.equal((await act(s,fillBlock(s.data.block,{fmc_info:3}))).status,400);
   s=await step(s,fillBlock(s.data.block));assert.equal(s.data.phase,`responsibility_${i}`);assert.equal(s.data.block.questions.length,9);assert(s.data.block.instruction.includes(s.data.sender));assert(!JSON.stringify(s.data.block.questions).includes('AI'));assert.equal((await act(s,fillBlock(s.data.block,{responsibility_influence:7}))).status,400);
   s=await step(s,fillBlock(s.data.block,{sender_control:3,responsibility_influence:0}));
   return {s,submitted};
@@ -37,35 +38,38 @@ test('authorization, hidden stimuli, validation and demographics',async()=>{
   assert.equal((await request('/api/admin/status')).status,401);assert.equal((await request('/api/state')).status,401);assert.equal((await fetch(base+'/stimulus/case_data.js')).status,404);
   const s=await start();const text=JSON.stringify(s.data);
   assert(!text.includes('"answer"'));assert(!('drafts'in s.data));assert(!('condition'in s.data));assert(!text.includes('baseline'));assert(!text.includes('plan'));
-  assert.equal(s.data.phase,'intro');assert.equal(s.data.casesTotal,4);assert.equal(s.data.senders.length,4);assert.equal(s.data.block.phase,'background');
+  assert.equal(s.data.phase,'intro');assert.equal(s.data.casesTotal,1);assert.equal(s.data.senders.length,1);assert(s.data.auditNotice);assert.equal(s.data.timeLimitMinutes,30);assert.equal(s.data.block.phase,'background');const cfg=await request('/api/config');assert.equal(cfg.data.casesPerParticipant,1);assert.equal(cfg.data.timeLimitMinutes,30);assert(Number.isFinite(cfg.data.readGateSeconds));
   assert.equal((await act(s,{bg_work:0})).status,400);assert.equal((await act(s,{...fillBlock(s.data.block),ptt_1:9})).status,400);
   const inv=await adm('invites',{count:1,mode:'live',label:'demographics validation'});assert.equal((await request('/api/start',{code:inv.data.invitations[0].code,resumeToken:randomUUID()+randomUUID(),consent:true,meta:{gender:1,age:17}})).status,400);assert.equal((await request('/api/start',{code:inv.data.invitations[0].code,resumeToken:randomUUID()+randomUUID(),consent:true})).status,400);
   const dupe=await request('/api/start',{...s.payload,resumeToken:randomUUID()+randomUUID()});assert.equal(dupe.status,409);assert.equal((await request('/api/start',s.payload)).data.sessionId,s.data.sessionId);
 });
 
-test('full path: four cases per participant, closing blocks, immutable submissions, keyword',async()=>{
+test('full path (v8): one case per participant, factual MCs scored, read gate recorded, closing blocks, immutable submission, keyword',async()=>{
   let s=await start();const id=s.data.sessionId;const cookie=s.cookie;
   s=await step(s,fillBlock(s.data.block,{bg_ai:2}));
-  const submitted=[];const senders=[];for(let i=1;i<=4;i++){senders.push(s.data.sender);const r=await runCase(s,i,{wrongFirst:i===1,editText:i===2?'追記した確認事項。':''});s=r.s;submitted.push(r.submitted)}
-  assert.equal(new Set(senders).size,4);
+  const sender=s.data.sender;const r=await runCase(s,1,{wrongFirst:true,editText:'追記した確認事項。'});s=r.s;const submitted=r.submitted;
   s=await finish(s);
-  const rows=(await all('session_cases')).filter(x=>x.session_id===id).sort((a,b)=>a.idx-b.idx);assert.equal(rows.length,4);
-  assert.equal(new Set(rows.map(r=>r.case_id)).size,4);assert.equal(new Set(rows.map(r=>r.condition)).size,4);for(let i=0;i<4;i++){assert.equal(rows[i].submitted_text,submitted[i]);assert(rows[i].submitted_at);assert.equal(rows[i].sender,senders[i])}
-  const sess=(await all('sessions')).find(x=>x.id===id);assert.equal(sess.protocol_version,'recipient-20260921-v7.2');assert(['disclosed','undisclosed'].includes(sess.disclosure));assert(Number.isInteger(sess.sequence));const plan=JSON.parse(sess.plan_json);assert.equal(plan.cases.length,4);assert(!plan.cases[0].text);assert.equal(JSON.parse(sess.meta_json).age,34);
-  const resp=(await all('responses')).filter(x=>x.session_id===id);const phases=resp.map(x=>x.phase);assert(phases.includes('materials_1_attempt_1')&&phases.includes('materials_1_attempt_2'));assert(phases.includes('cognition_3')&&phases.includes('trust_post_2')&&phases.includes('recall'));
+  const rows=(await all('session_cases')).filter(x=>x.session_id===id);assert.equal(rows.length,1);assert.equal(rows[0].submitted_text,submitted);assert(rows[0].submitted_at);assert.equal(rows[0].sender,sender);assert(['baseline','missing_info','off_focus','source_deviation'].includes(rows[0].condition));
+  const sess=(await all('sessions')).find(x=>x.id===id);assert.equal(sess.protocol_version,'recipient-20260925-v8');assert(['disclosed','undisclosed'].includes(sess.disclosure));assert(Number.isInteger(sess.sequence));assert.equal(sess.condition,rows[0].condition);const plan=JSON.parse(sess.plan_json);assert.equal(plan.allocation,'between-v8');assert.equal(plan.cases.length,1);assert(!plan.cases[0].text);assert.equal(JSON.parse(sess.meta_json).age,34);
+  const resp=(await all('responses')).filter(x=>x.session_id===id);const phases=resp.map(x=>x.phase);assert(phases.includes('materials_1_attempt_1')&&phases.includes('materials_1_attempt_2'));assert(phases.includes('cognition_1')&&phases.includes('trust_post_1')&&phases.includes('recall'));
+  const perc=JSON.parse(resp.find(x=>x.phase==='perception_1').value_json);for(const q of ['fmc_info','fmc_policy','fmc_accuracy'])assert([0,1].includes(perc[q+'_correct']),q);
+  const keyed=cases.common.fmcKeyed[rows[0].condition];assert.equal(perc.fmc_info_correct,keyed.fmc_info==='はい'?1:0,'fmc_info scored against keyed answer (participant answered はい)');
+  const read=JSON.parse(resp.find(x=>x.phase==='read_1').value_json);assert(Number.isInteger(read.read_seconds)&&read.read_seconds>=0);
   assert.equal(JSON.parse(resp.find(x=>x.phase==='recall').value_json).belief,3);
 });
 
-test('allocation: independent disclosure and least-used Williams row within its group; all four states and four distinct themes per participant; theme x state balanced',async()=>{
+test('allocation (v8): independent disclosure; content state least-started within its disclosure group; one case; themes balanced within state x disclosure',async()=>{
+  const st=await adm('stimulus');const seqs=st.data.sequences;assert.equal(seqs.length,8);
   const tally=(await all('sessions')).filter(x=>x.mode==='live'&&!x.campaign_hash&&x.protocol_version===PROTOCOL_VERSION&&x.sequence!=null).reduce((m,x)=>{m[x.sequence]=(m[x.sequence]||0)+1;return m},{});const count=i=>tally[i]||0;
-  const mine=[];for(let i=0;i<16;i++){const s=await start();const sess=(await all('sessions')).find(x=>x.id===s.data.sessionId);assert(sess.sequence>=0&&sess.sequence<8);const plan=JSON.parse(sess.plan_json);assert.equal(new Set(plan.cases.map(c=>c.case_id)).size,4);assert.deepEqual([...plan.states].sort(),['baseline','missing_info','off_focus','overreach']);assert.equal(plan.cases.length,4);plan.cases.forEach((c,k)=>assert.equal(c.condition,plan.states[k]));assert.equal(plan.allocation,'bernoulli-disclosure-v1');assert.equal(plan.disclosureProbability,0.5);const offset=sess.disclosure==='disclosed'?0:4;const min=Math.min(...Array.from({length:4},(_,k)=>count(k+offset)));assert.equal(count(sess.sequence),min,'least-used Williams row within the randomly selected disclosure');tally[sess.sequence]=count(sess.sequence)+1;mine.push({disclosure:sess.disclosure,plan})}
-  const pos={};for(const x of mine)x.plan.states.forEach((st,p)=>{pos[st+p]=(pos[st+p]||0)+1});assert.equal(Object.keys(pos).length,16,'every state appears in every position across 16 starts');
+  const seen={};for(let i=0;i<16;i++){const s=await start();const sess=(await all('sessions')).find(x=>x.id===s.data.sessionId);assert(sess.sequence>=0&&sess.sequence<8);const plan=JSON.parse(sess.plan_json);assert.equal(plan.allocation,'between-v8');assert.equal(plan.cases.length,1);assert.equal(plan.states.length,1);assert.equal(plan.cases[0].condition,plan.states[0]);assert.equal(seqs[sess.sequence].state,plan.states[0]);assert.equal(seqs[sess.sequence].disclosure,sess.disclosure);assert.equal(sess.condition,plan.states[0]);
+    const group=seqs.map((q,k)=>k).filter(k=>seqs[k].disclosure===sess.disclosure);const min=Math.min(...group.map(count));assert.equal(count(sess.sequence),min,'least-started content state within the drawn disclosure group');tally[sess.sequence]=count(sess.sequence)+1;seen[plan.states[0]]=(seen[plan.states[0]]||0)+1}
+  assert(Object.keys(seen).length>=3,'several content states across 16 starts: '+JSON.stringify(seen));
 });
 
 test('withdrawal, stale and concurrent transitions, event phases',async()=>{
   let s=await start();const end=await act(s,{},{withdraw:true});assert.equal(end.data.phase,'withdrawn');
   s=await start();const cookie=s.cookie;s=await step(s,fillBlock(s.data.block));const results=await Promise.all([act(s,{knowledge:[1,1]}),act(s,{knowledge:[1,1]})]);assert.deepEqual(results.map(x=>x.status).sort(),[200,409]);
-  const e={id:randomUUID(),page:randomUUID(),seq:1,phase:'cognition_2',type:'answer_change',wall:new Date().toISOString(),mono:0.5,payload:{name:'suff_1',value:'5'}};for(let i=0;i<2;i++)assert.equal((await request('/api/records',{events:[e]},cookie)).status,200);assert.equal((await all('events')).filter(x=>x.session_id===s.data.sessionId&&x.event_id===e.id).length,1);assert.equal((await request('/api/records',{events:[{...e,id:randomUUID(),seq:2,phase:'nonexistent_9'}]},cookie)).status,400);
+  const e={id:randomUUID(),page:randomUUID(),seq:1,phase:'cognition_1',type:'answer_change',wall:new Date().toISOString(),mono:0.5,payload:{name:'suff_1',value:'5'}};for(let i=0;i<2;i++)assert.equal((await request('/api/records',{events:[e]},cookie)).status,200);assert.equal((await all('events')).filter(x=>x.session_id===s.data.sessionId&&x.event_id===e.id).length,1);assert.equal((await request('/api/records',{events:[{...e,id:randomUUID(),seq:2,phase:'nonexistent_9'}]},cookie)).status,400);
   assert.equal((await request('/api/admin/export?table=sessions',undefined,cookie)).status,401);
 });
 
@@ -73,7 +77,7 @@ test('large event queue fits production limits',async()=>{const s=await start();
 
 test('100 invitations; admin stimulus snapshot; campaign entry with keyword precedence',async()=>{
   const r=await adm('invites',{count:100,mode:'live',label:'batch-limit regression'});assert.equal(r.status,200);assert.equal(r.data.invitations.length,100);
-  const st=await adm('stimulus');assert.equal(st.data.version,'recipient-20260921-v7.2');assert.equal(st.data.sequences.length,8);assert.equal(st.data.phases[1],'materials_1');
+  const st=await adm('stimulus');assert.equal(st.data.version,'recipient-20260925-v8');assert.equal(st.data.sequences.length,8);assert.equal(st.data.cases.conditions.length,4);assert.equal(st.data.phases[1],'materials_1');
   const c=await adm('campaigns',{mode:'live',label:'yahoo test v5',keyword:'WORKSLOP',capacity:2});assert(c.data.url.includes('#entry='));
   const startEntry=async()=>request('/api/start',{entry:c.data.token,resumeToken:randomUUID()+randomUUID(),consent:true,meta:{gender:3,age:52}});
   const a=await startEntry();assert.equal(a.status,200,JSON.stringify(a.data));assert(a.data.code);const b=await startEntry();assert.equal(b.status,200);assert.equal((await startEntry()).status,200);

@@ -197,3 +197,30 @@ Cloudflare version: `a41853c4-00d4-4dbf-922d-95b3090d3876`。
 - 除外方法（集計スクリプト）：`node tools/pilot-summary.mjs --label pilot-50 --since 2026-09-21T07:00:00Z`。`--since` は募集を開始した時刻（UTC）以降だけを対象にする。実際の募集開始が遅い場合は、その時刻に置き換える。
 - 除外方法（CSV 分析）：`participants.csv` の `created_at` が募集開始時刻より前の行を落とす。同じ条件で `sessions.created_at` を使えば events・responses も同様に絞れる。
 - 本番／テストの区別は撤去済みのため、以後の動作確認も同じ扱いになる。動作確認をした日時は記録し、同じ方法で除く。
+
+# v8（参加者間・1人1案件）と予備実験環境（2026-09-24、ブランチ v8-between）
+
+設計は `docs/DESIGN-v8.md`、人数は `docs/POWER-v8.md`。刺激と依頼文の入力は `stimuli-v8/`（`node tools/build-cases.mjs` で `src/cases.js` を生成）。条件は `baseline / missing_info / off_focus / source_deviation`。
+
+変更点：1人1案件（開示はコイン投げ、文書条件は開示群内で最少件数優先、テーマは条件×開示で最少件数優先）、知覚ブロック先頭の事実型MC3問（サーバが `fmc_*_correct` を付与）、読了ゲート（`READ_GATE_SECONDS`、既定45秒、クライアントで無効化しサーバでも検証、`read_seconds` を回答に記録）、予告文・監査型注意文、1案件向けの文言、制限時間30分。
+
+## 予備実験環境（本番とは別の Worker と D1）
+
+```sh
+npx wrangler d1 create handoff-experiment-pretest        # 出力の database_id を wrangler.jsonc の env.pretest に貼る
+D1_NAME=handoff-experiment-pretest WRANGLER_ENV=pretest node tools/init-db.mjs
+D1_NAME=handoff-experiment-pretest WRANGLER_ENV=pretest node tools/migrate.mjs remote
+npx wrangler secret put ADMIN_KEY --env pretest < .private/admin-key.txt
+npx wrangler deploy --env pretest
+EXPERIMENT_URL=https://handoff-research-pretest.<account>.workers.dev node tools/export.mjs
+TEST_URL=https://handoff-research-pretest.<account>.workers.dev node tools/pretest-summary-v8.mjs --since <募集開始UTC>
+```
+
+本番（`npx wrangler deploy`、環境指定なし）は v8 を確認するまで配備しない。ローカル検証は 8795 番で行う（8791 は別セッションが占有することがある）：
+
+```sh
+npx wrangler d1 execute handoff-experiment --local --file schema.sql && node tools/migrate.mjs local
+npx wrangler dev --port 8795            # .dev.vars に READ_GATE_SECONDS=1 を置くとテストが待たない
+TEST_URL=http://localhost:8795 node --test tests/api.test.mjs
+node --test tests/measurement.test.mjs tests/campaign-randomization.test.mjs
+```
