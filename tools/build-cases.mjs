@@ -33,7 +33,7 @@ const out={version:'cases-20260924-v8',builtAt:new Date().toISOString(),source:'
     disclosure:{...m.common.disclosure,badge:plain.common.disclosureBadge||''},
     handoffDisclosed:plain.common.handoffDisclosed||'',
     precheck:plain.common.precheck,
-    auditNotice:plain.common.auditNotice,readGateNote:plain.common.readGateNote,
+    auditNotice:plain.common.auditNotice,readGateNote:plain.common.readGateNote,sourceCheckNote:plain.common.sourceCheckNote||'',materialsNote:plain.common.materialsNote||'',
     fmcOptions:plain.common.fmcOptions,fmcKeyed:plain.common.fmcKeyed,fmcInstruction:plain.common.fmcInstruction,conditionSpec:plain.common.conditionSpec,
     understandingScale:m.common.understanding_scale},
   cases};
