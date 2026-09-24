@@ -75,3 +75,5 @@ a{text-underline-offset:3px}
 .source-label{margin:6px 0 2px;font-size:12.5px;font-weight:700;letter-spacing:.04em;color:#54687f}.excerpt{border-top:1px dashed #d7dfe9;margin-top:8px;padding:0}.excerpt>summary{font-size:14px;font-weight:600;color:#1f56a0;padding:10px 6px}.excerpt>div{padding:0 6px 8px}.excerpt p{font-size:14.5px;line-height:1.85;color:#2a3b50}
 
 .disclosure-badge{display:inline-block;margin:0 0 .6rem;padding:.15rem .6rem;border-radius:999px;background:#fff4c2;color:#5a4300;font-size:.85rem;font-weight:700;border:1px solid #e6cf6a}
+
+.handoff-message{margin:0 0 12px;padding:10px 14px;border-left:3px solid #b9c8d8;background:#f7f9fc;color:#33465c;font-size:15px;line-height:1.8;white-space:pre-wrap}
