@@ -23,7 +23,7 @@ await page.locator('.request-body').waitFor();const req=await page.locator('.req
 for(const [i,ans] of [[0,1],[1,1]])await page.locator(`input[name=k${i}][value="${ans}"]`).check();await page.getByRole('button',{name:'報告案を受け取る'}).click();
 await page.locator('#read-done').waitFor();const gate=await page.evaluate(()=>fetch('/api/config').then(r=>r.json()).then(c=>c.readGateSeconds));
 if(gate>0){assert.equal(await page.locator('#read-done').isDisabled(),true,'gate closed at render');assert((await page.locator('#read-done').innerText()).includes('秒'),'countdown label');}
-const readText=await page.locator('.task-instruction').innerText();assert(readText.includes('何が書かれていたかを尋ね'),'forewarning');
+const readText=await page.locator('.task-instruction').innerText();assert(readText.includes('何が書かれていたかを尋ね'),'forewarning');const stRead=await page.evaluate(()=>fetch('/api/state').then(r=>r.json()));const msg=await page.locator('.handoff-message').innerText();assert(msg.includes('報告案を作りました')&&msg.includes(stRead.sender),'colleague handoff message rendered');assert.equal(msg.includes('生成AI'),!!stRead.disclosureText,'handoff message matches disclosure arm');assert.equal(await page.locator('.disclosure-badge').count(),stRead.disclosureText?1:0,'badge matches arm');
 await page.screenshot({path:'test-results/v8-read-gate.png'});
 await page.waitForFunction(()=>{const b=document.getElementById('read-done');return b&&!b.disabled},null,{timeout:(gate+5)*1000});assert.equal(await page.locator('#read-done').innerText(),'読み終わったので質問に進む');
 await page.locator('#read-done').click();await page.locator('input[name=readcheck]').first().waitFor();assert.equal(await phase(),'cognition_1');
