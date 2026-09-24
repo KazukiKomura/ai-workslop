@@ -7,7 +7,6 @@ export const LEGACY_V4='recipient-20260921-v4';
 export const LEGACY_V3='recipient-20260919-v3';
 export const CASES_PER_PARTICIPANT=1; // v8: between-participants, one case each
 export const READ_GATE_SECONDS=45; // default; override with the READ_GATE_SECONDS binding (tests use a short value)
-export const TIME_LIMIT_MINUTES=30;
 export const DURATION_TEXT='おおよそ 10〜20 分程度';
 export const SENDERS=['佐藤','鈴木','高橋','田中'];
 const AGREE={min:1,max:7,unknown:false,ends:'1：まったくそう思わない ／ 7：非常にそう思う'};

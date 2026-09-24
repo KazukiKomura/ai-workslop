@@ -1,5 +1,5 @@
 import cases from './cases.js';
-import {PROTOCOL_VERSION as VERSION, measurement, isV5, nextPhase, PHASES_V5, phaseList, splitPhase, scoringNotes, CASES_PER_PARTICIPANT as K, SENDERS, READ_GATE_SECONDS, TIME_LIMIT_MINUTES, DURATION_TEXT} from './measurement.js';
+import {PROTOCOL_VERSION as VERSION, measurement, isV5, nextPhase, PHASES_V5, phaseList, splitPhase, scoringNotes, CASES_PER_PARTICIPANT as K, SENDERS, READ_GATE_SECONDS, DURATION_TEXT} from './measurement.js';
 const TERMINAL=['complete','withdrawn','screened_out'];
 const LEGACY_PHASES=['intro','read','burden1','edit','post','responsibility','repair_appraisal','recall','manipulation','cognition','trust_post','understanding','perception'];
 const STATES=cases.conditions; // baseline, missing_info, off_focus, source_deviation
@@ -39,7 +39,7 @@ async function state(s,env){
  const plan=JSON.parse(s.plan_json||'{}');const rows=await loadCases(env,s);const {base,index}=splitPhase(s.phase);
  const disclosure=s.disclosure==='disclosed'?cases.common.disclosure.present:'';const badge=s.disclosure==='disclosed'?(cases.common.disclosure.badge||''):'';const handoffText=c=>fill(s.disclosure==='disclosed'&&cases.common.handoffDisclosed?cases.common.handoffDisclosed:c.handoff,map);
  const row=index?rows[index-1]:null;const c=row?caseById(row.case_id):null;const map=row?{sender:row.sender,title:c.title,position:index,domain:c.domain}:{};
- if(base==='intro')Object.assign(result,{notice:cases.common.notice,role:cases.common.role,workRule:cases.common.workRule,auditNotice:cases.common.auditNotice||'',timeLimitMinutes:TIME_LIMIT_MINUTES,senders:plan.senders||SENDERS.slice(0,K),block:publicBlock('background',{domain:cases.cases.map(x=>x.domain).filter((v,i,a)=>a.indexOf(v)===i).join('・')})});
+ if(base==='intro')Object.assign(result,{notice:cases.common.notice,role:cases.common.role,workRule:cases.common.workRule,auditNotice:cases.common.auditNotice||'',senders:plan.senders||SENDERS.slice(0,K),block:publicBlock('background',{domain:cases.cases.map(x=>x.domain).filter((v,i,a)=>a.indexOf(v)===i).join('・')})});
  if(base==='materials')Object.assign(result,{position:index,...materials(c,map),sender:row.sender,precheck:precheckFor(index).map(({question,options})=>({question:fill(question,map),options:options.map(o=>fill(o,map))}))});
  if(base==='read')Object.assign(result,{position:index,...materials(c,map),sender:row.sender,handoff:handoffText(c),disclosureText:disclosure,disclosureBadge:badge,draftTitle:c.draftTitle,initialText:row.initial_text,readInstruction:cases.common.readInstruction,readGateSeconds:gate(env),readGateNote:cases.common.readGateNote||''});
  if(base==='cognition'){const blk=publicBlock('cognition',map);blk.questions=[readcheckFor(rows,index).question,...blk.questions];Object.assign(result,{position:index,...materials(c,map),sender:row.sender,disclosureText:disclosure,disclosureBadge:badge,draftTitle:c.draftTitle,initialText:row.initial_text,block:blk})}
@@ -123,7 +123,7 @@ async function allocate(env,mode,campaignHash=null){
  return {allocation:'between-v8',disclosureProbability:0.5,sequence:seqIndex,disclosure,states:[st],readGateSeconds:gate(env),senders,cases:[{idx:1,case_id:c.id,base_id:base.id,condition:st,sender:senders[0],text:base.versions[st].paragraphs.join('\n\n')}]};
 }
 async function api(r,env,url){const path=url.pathname;
- if(path==='/api/config'&&r.method==='GET'){const c=await config(env);const {resetIps,finalKeyword,...pub}=c;return json({...pub,casesPerParticipant:K,timeLimitMinutes:TIME_LIMIT_MINUTES,durationText:DURATION_TEXT,readGateSeconds:gate(env)})}
+ if(path==='/api/config'&&r.method==='GET'){const c=await config(env);const {resetIps,finalKeyword,...pub}=c;return json({...pub,casesPerParticipant:K,durationText:DURATION_TEXT,readGateSeconds:gate(env)})}
  if(path==='/api/leave'&&r.method==='POST')return json({ok:true},200,{'set-cookie':setCookie('participant','',0)});
  if(path==='/api/admin/login'&&r.method==='POST'){const b=await body(r);if(!env.ADMIN_KEY||typeof b.key!=='string'||await sha(b.key)!==await sha(env.ADMIN_KEY))fail('管理キーが一致しません。',401);return json({ok:true},200,{'set-cookie':setCookie('research_admin',await sha('admin-session:'+env.ADMIN_KEY),28800)})}
  if(path.startsWith('/api/admin/')){await admin(r,env);

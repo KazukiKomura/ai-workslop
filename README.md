@@ -202,7 +202,7 @@ Cloudflare version: `a41853c4-00d4-4dbf-922d-95b3090d3876`。
 
 設計は `docs/DESIGN-v8.md`、人数は `docs/POWER-v8.md`。刺激と依頼文の入力は `stimuli-v8/`（`node tools/build-cases.mjs` で `src/cases.js` を生成）。条件は `baseline / missing_info / off_focus / source_deviation`。
 
-変更点：1人1案件（開示はコイン投げ、文書条件は開示群内で最少件数優先、テーマは条件×開示で最少件数優先）、知覚ブロック先頭の事実型MC3問（サーバが `fmc_*_correct` を付与）、読了ゲート（`READ_GATE_SECONDS`、既定45秒、クライアントで無効化しサーバでも検証、`read_seconds` を回答に記録）、予告文・監査型注意文、1案件向けの文言、制限時間30分。
+変更点：1人1案件（開示はコイン投げ、文書条件は開示群内で最少件数優先、テーマは条件×開示で最少件数優先）、知覚ブロック先頭の事実型MC3問（サーバが `fmc_*_correct` を付与）、読了ゲート（`READ_GATE_SECONDS`、既定45秒、クライアントで無効化しサーバでも検証、`read_seconds` を回答に記録）、予告文・監査型注意文、1案件向けの文言。制限時間の表示はアプリから撤去（作業時間の上限は募集サイト側のみ）。
 
 ## 配備（本番単一環境。v7.2 と同じ Worker と D1。旧データは protocol_version で区別）
 
@@ -225,3 +225,9 @@ npx wrangler dev --port 8795            # .dev.vars に READ_GATE_SECONDS=1 を�
 TEST_URL=http://localhost:8795 node --test tests/api.test.mjs
 node --test tests/measurement.test.mjs tests/campaign-randomization.test.mjs
 ```
+
+## 2026-09-24：研究者側のMC判定の訂正（配信変更なし）
+
+一次MCでは、各群の正答率の高低ではなく、同じ問の「いいえ」率の変化を片側Fisher検定で確認する。基準群の正答は「はい」、対象操作群の正答は「いいえ」。正答率とWilson区間は群別に報告し、「覚えていない」を除外しない。`tools/factual-mc-v8.mjs` が集計を共通化し、`tools/pretest-summary-v8.mjs` の通常実行ではMCと手続きのみを出力する。MC判定前には `--include-outcomes` を使わない（このフラグはS・編集率・努力の表示／JSON保存を明示的に有効化する）。
+
+設計・根拠は `docs/DESIGN-v8.md` と `docs/POWER-v8.md`。今回、参加者向けソース・正答キー・DBは変更していないためWorkerの再デプロイは不要。合成データによる検証のみで、v8実参加者の条件別主要結果は集計していない。
