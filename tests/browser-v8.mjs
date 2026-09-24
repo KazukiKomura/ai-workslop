@@ -28,7 +28,7 @@ await page.screenshot({path:'test-results/v8-read-gate.png'});
 await page.waitForFunction(()=>{const b=document.getElementById('read-done');return b&&!b.disabled},null,{timeout:(gate+5)*1000});assert.equal(await page.locator('#read-done').innerText(),'読み終わったので質問に進む');
 await page.locator('#read-done').click();await page.locator('input[name=readcheck]').first().waitFor();assert.equal(await phase(),'cognition_1');
 await page.locator('input[name=readcheck][value="0"]').check();await fillBlock();await page.getByRole('button',{name:'回答を確定して編集へ'}).click();
-await page.locator('#editor').waitFor();await page.locator('#editor').fill((await page.locator('#editor').inputValue())+'\n追記。');page.once('dialog',d=>d.accept());await page.locator('#submit-document').click();
+await page.locator('#editor').waitFor();assert.equal(await page.locator('.disclosure-badge').count(),stRead.disclosureText?1:0,'badge on edit screen');await page.locator('#editor').fill((await page.locator('#editor').inputValue())+'\n追記。');page.once('dialog',d=>d.accept());await page.locator('#submit-document').click();
 await page.locator('input[type=range]').first().waitFor();await fillBlock();await page.getByRole('button',{name:'次へ'}).click();
 await page.locator('input[name=tr_1]').first().waitFor();await fillBlock();await page.getByRole('button',{name:'次へ'}).click();
 await page.locator('input[name=fmc_info]').first().waitFor();assert.equal(await phase(),'perception_1');const percForm=await page.locator('form').innerText();assert(percForm.includes('届いたときの報告案についてです。次の3つは'),'fmc instruction follows the block instruction');assert(percForm.indexOf('fmc')<0);
