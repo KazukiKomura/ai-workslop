@@ -1,17 +1,20 @@
-// Questionnaire definitions. v4 (2026-09-21): 4 content conditions x AI disclosure; primary outcome = pre-edit sufficiency.
+// Questionnaire definitions. v5 (2026-09-24, protocol v8): between-participants, one case per participant; 4 content conditions (baseline, missing_info, off_focus, source_deviation) x AI disclosure; primary outcome = pre-edit sufficiency; factual manipulation checks precede the perception block.
 // Existing scales are used where a published scale fits; adaptations and study-specific items are flagged in `source`.
 // Japanese wordings of English scales are research translations (no back-translation yet); see the manuscript for citations.
-export const PROTOCOL_VERSION='recipient-20260921-v7.2';
-export const V5_VERSIONS=['recipient-20260921-v5','recipient-20260921-v5.1','recipient-20260921-v6','recipient-20260921-v7','recipient-20260921-v7.2'];
+export const PROTOCOL_VERSION='recipient-20260925-v8';
+export const V5_VERSIONS=['recipient-20260921-v5','recipient-20260921-v5.1','recipient-20260921-v6','recipient-20260921-v7','recipient-20260921-v7.2','recipient-20260925-v8'];
 export const LEGACY_V4='recipient-20260921-v4';
 export const LEGACY_V3='recipient-20260919-v3';
-export const CASES_PER_PARTICIPANT=4;
+export const CASES_PER_PARTICIPANT=1; // v8: between-participants, one case each
+export const READ_GATE_SECONDS=45; // default; override with the READ_GATE_SECONDS binding (tests use a short value)
+export const TIME_LIMIT_MINUTES=30;
+export const DURATION_TEXT='おおよそ 10〜20 分程度';
 export const SENDERS=['佐藤','鈴木','高橋','田中'];
 const AGREE={min:1,max:7,unknown:false,ends:'1：まったくそう思わない ／ 7：非常にそう思う'};
 const q=(id,text,extra={})=>({id,text,...AGREE,...extra});
 
 export const measurement={
-  version:'questionnaire-20260921-v4',
+  version:'questionnaire-20260924-v5',
   terminology:'文書は「報告案」、送り手は「{sender}さん」で統一。',
   rating:'同意評定は1（まったくそう思わない）〜7（非常にそう思う）の7件法。v5.1で「判断できない」を廃止（元尺度に合わせ、主要指標の欠測を避ける）。想起の「覚えていない」のみ残す。',
   sources:{
@@ -20,7 +23,8 @@ export const measurement={
     propensity:'Frazier, Johnson & Fainshmidt (2013) J. Trust Research 3(2), 4-item propensity to trust (alpha .84).',
     tlx:'NASA-TLX raw (unweighted) version; Japanese subscale names per 芳賀・水上 (1996) 人間工学 32(2). Definitions adapted from the original NASA-TLX descriptions. Score = unweighted mean of six 0-100 ratings (RTLX).',
     responsibility:'Study-specific items (responsibility-20260919-v1), grounded in Schlenker et al. 1994, Malle et al. 2014, Hohenstein & Jung 2020, Williams & Karau 1991.',
-    perception:'Six content viewpoints (manuscript Table 1) as single items; perc_1 and read_ease follow AIMQ free-of-error / understandability wording.'
+    perception:'Six content viewpoints (manuscript Table 1) as single items; perc_1 and read_ease follow AIMQ free-of-error / understandability wording.',
+    fmc:'Factual manipulation checks (Kane & Barabas 2019): three yes/no/do-not-remember items about the received draft, worded per case (cases.js fmc), placed at the top of the perception block; keyed answers per condition in cases.common.fmcKeyed.'
   },
   blocks:{
     background:{title:'事前の質問',instruction:'あなた自身について答えてください。',questions:[
@@ -74,8 +78,8 @@ export const measurement={
       q('repair_reluctance','{sender}さんに代わって報告案の不足を補うことに、抵抗を感じた。',{source:'responsibility',ends:'1：まったく当てはまらない ／ 7：非常によく当てはまる'}),
       {id:'responsibility_influence',type:'scale',min:0,max:6,unknown:false,ends:'0：大きく減らす方向 ／ 3：影響しなかった ／ 6：大きく増やす方向',text:'{sender}さんの責任をどう考えたかは、自分が確認・修正に力をかける程度に、どのように影響したと思いますか。',source:'responsibility'}
     ]},
-    reflection:{title:'{k} 件を通して',instruction:'{k} 件の案件を通して感じたことを答えてください。',questions:[
-      {id:'resp_free',type:'text',required:false,maxLength:2000,text:'{k} 件の案件を通して、同僚の責任をどう捉え、それが確認・修正の仕方にどう関わったと思いますか。（任意・自由記述）',source:'study'}
+    reflection:{title:'案件を通して',instruction:'今回の案件を通して感じたことを答えてください。',questions:[
+      {id:'resp_free',type:'text',required:false,maxLength:2000,text:'今回の案件を通して、同僚の責任をどう捉え、それが確認・修正の仕方にどう関わったと思いますか。（任意・自由記述）',source:'study'}
     ]},
     perception:{title:'最初の報告案について（{title}）',instruction:'この案件で、{sender}さんから最初に届いた報告案について答えてください。あなたが直した後の文章ではなく、届いたときの報告案についてです。',questions:[
       q('perc_1','最初の報告案の記述は、元資料に照らして正確だった。',{source:'perception/aimq free-of-error'}),
@@ -89,7 +93,7 @@ export const measurement={
       q('certainty','最初の報告案の結論は、確信を持った言い方だった。',{source:'study (v3)'})
     ]},
     recall:{title:'報告案の作成方法について',instruction:'最後に、この調査で受け取った報告案の作成方法について答えてください。',questions:[
-      {id:'memory',type:'choice',text:'受け取った報告案に、作成方法についての説明はありましたか。',options:['すべての報告案に、生成AIを使ったという説明があった','一部の報告案にだけ、生成AIを使ったという説明があった','作成方法の説明はなかった','覚えていない'],source:'study (disclosure check)'},
+      {id:'memory',type:'choice',text:'受け取った報告案に、作成方法についての説明はありましたか。',options:['生成AIを使ったという説明があった','作成方法の説明はなかった','覚えていない'],source:'study (disclosure check; v8 one case: 0=説明あり,1=なし,2=覚えていない)'},
       {id:'disc_confidence',type:'scale',min:1,max:7,unknown:false,ends:'1：まったく自信がない ／ 7：確信している',text:'いまの答え（作成方法の説明があったかどうか）に、どの程度自信がありますか。',source:'study (disclosure check)'},
       {id:'belief',type:'scale',min:1,max:7,unknown:false,ends:'1：まったく思わなかった ／ 7：非常に強く思った',text:'作業中、受け取った報告案に生成AIが使われたと、どの程度思っていましたか。',source:'study (v3)'},
       {id:'disc_attention',type:'scale',min:1,max:7,unknown:false,ends:'1：まったく意識しなかった ／ 7：常に意識していた',text:'作業中、報告案の作成方法（生成AIを使ったかどうか）をどの程度意識していましたか。',source:'study (disclosure check)'},

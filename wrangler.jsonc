@@ -2,5 +2,6 @@
  "name":"handoff-research","main":"src/worker.js","compatibility_date":"2026-09-18",
  "assets":{"directory":"./public","binding":"ASSETS","run_worker_first":true},
  "d1_databases":[{"binding":"DB","database_name":"handoff-experiment","database_id":"8896d8a5-2619-4e06-bc0d-2af4a969e35d"}],
- "observability":{"enabled":false}
+ "observability":{"enabled":false},
+ "vars":{"READ_GATE_SECONDS":"45"}
 }

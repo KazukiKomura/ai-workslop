@@ -197,3 +197,31 @@ Cloudflare version: `a41853c4-00d4-4dbf-922d-95b3090d3876`。
 - 除外方法（集計スクリプト）：`node tools/pilot-summary.mjs --label pilot-50 --since 2026-09-21T07:00:00Z`。`--since` は募集を開始した時刻（UTC）以降だけを対象にする。実際の募集開始が遅い場合は、その時刻に置き換える。
 - 除外方法（CSV 分析）：`participants.csv` の `created_at` が募集開始時刻より前の行を落とす。同じ条件で `sessions.created_at` を使えば events・responses も同様に絞れる。
 - 本番／テストの区別は撤去済みのため、以後の動作確認も同じ扱いになる。動作確認をした日時は記録し、同じ方法で除く。
+
+# v8（参加者間・1人1案件）と予備実験環境（2026-09-24、ブランチ v8-between）
+
+設計は `docs/DESIGN-v8.md`、人数は `docs/POWER-v8.md`。刺激と依頼文の入力は `stimuli-v8/`（`node tools/build-cases.mjs` で `src/cases.js` を生成）。条件は `baseline / missing_info / off_focus / source_deviation`。
+
+変更点：1人1案件（開示はコイン投げ、文書条件は開示群内で最少件数優先、テーマは条件×開示で最少件数優先）、知覚ブロック先頭の事実型MC3問（サーバが `fmc_*_correct` を付与）、読了ゲート（`READ_GATE_SECONDS`、既定45秒、クライアントで無効化しサーバでも検証、`read_seconds` を回答に記録）、予告文・監査型注意文、1案件向けの文言、制限時間30分。
+
+## 配備（本番単一環境。v7.2 と同じ Worker と D1。旧データは protocol_version で区別）
+
+第1波（予備実験）は本実験と同じ環境・同じ募集枠で行い、MCと手続き指標だけで合否を判定する。合格ならそのまま募集を続け、第1波を本実験に含める（`docs/DESIGN-v8.md` 2節）。
+
+```sh
+node tools/migrate.mjs remote                 # v8 にスキーマ変更はない（冪等）
+npx wrangler deploy
+node tools/verify-production.mjs              # 読み取り検証だけ。本番に回答を作らない
+node tools/pretest-summary-v8.mjs --since <募集開始UTC>
+```
+
+配備前に管理画面の進行状況で進行中セッションがないことを確認する。旧募集枠は閉じ、v8 用の募集枠を新しく発行して共有リンクを掲載する。
+
+ローカル検証は 8795 番で行う（8791 は別セッションが占有することがある）：
+
+```sh
+npx wrangler d1 execute handoff-experiment --local --file schema.sql && node tools/migrate.mjs local
+npx wrangler dev --port 8795            # .dev.vars に READ_GATE_SECONDS=1 を置くとテストが待たない
+TEST_URL=http://localhost:8795 node --test tests/api.test.mjs
+node --test tests/measurement.test.mjs tests/campaign-randomization.test.mjs
+```

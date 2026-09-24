@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {measurement, PROTOCOL_VERSION, LEGACY_V4, isV5, nextPhase, phaseList, splitPhase, blockFor, scoringNotes, CASES_PER_PARTICIPANT, SENDERS} from '../src/measurement.js';
 import cases from '../src/cases.js';
 
-test('v5 phase list: intro, three case loops, closing blocks',()=>{
+test('v8 phase list: intro, one case loop, closing blocks',()=>{
+  assert.equal(CASES_PER_PARTICIPANT,1);
   assert.equal(isV5(PROTOCOL_VERSION),true);assert.equal(isV5(LEGACY_V4),false);
   const l=phaseList();
   assert.equal(l[0],'intro');assert.equal(l[1],'materials_1');assert.equal(l.at(-1),'complete');
@@ -31,10 +32,13 @@ test('blocks: ids unique within a block, scales well formed, sender placeholders
   assert.equal(blockFor('post').questions.filter(q=>q.type==='range').length,6);
   assert(scoringNotes().rtlx.includes('無加重'));
 });
-test('cases: 6 cases, four conditions registered, sender placeholder in handoff, precheck answers present',()=>{
+test('cases: 6 cases, four v8 conditions registered, factual MC wording and keyed answers, sender placeholder in handoff, precheck answers present',()=>{
   assert.equal(cases.cases.length,6);
-  assert.deepEqual(cases.conditions,['baseline','missing_info','off_focus','overreach']);
-  for(const c of cases.cases){const v=c.bases[0].versions;assert(v.baseline&&v.missing_info&&v.off_focus&&v.overreach,c.id);assert(c.handoff.includes('{sender}'),c.id);assert.equal(c.sources.length,3)}
+  assert.deepEqual(cases.conditions,['baseline','missing_info','off_focus','source_deviation']);
+  for(const c of cases.cases){const v=c.bases[0].versions;assert(v.baseline&&v.missing_info&&v.off_focus&&v.source_deviation,c.id);assert(c.handoff.includes('{sender}'),c.id);assert.equal(c.sources.length,3);assert.deepEqual(c.fmc.map(q=>q.id),['fmc_info','fmc_policy','fmc_accuracy'],c.id);assert(c.request.paragraphs.some(x=>/^　A\./.test(x))&&c.request.paragraphs.some(x=>/^　D\./.test(x)),c.id+' A-D labelled request')}
+  assert.deepEqual(cases.common.fmcOptions,['はい','いいえ','覚えていない']);
+  for(const k of cases.conditions)assert.deepEqual(Object.keys(cases.common.fmcKeyed[k]).sort(),['fmc_accuracy','fmc_info','fmc_policy'],k);
+  assert.equal(cases.common.fmcKeyed.missing_info.fmc_info,'いいえ');assert.equal(cases.common.fmcKeyed.off_focus.fmc_policy,'いいえ');assert.equal(cases.common.fmcKeyed.source_deviation.fmc_accuracy,'いいえ');assert.equal(cases.common.fmcKeyed.baseline.fmc_accuracy,'はい');
   assert.equal(cases.common.precheck.length,2);
   assert(cases.common.precheck.every(q=>Number.isInteger(q.answer)));
 });
