@@ -42,7 +42,7 @@ function blockForm(blockDef,extra=[],button='次へ',before=[]){const f=h('form'
 function introScreen(){
  const bg=state.block;const k=state.casesTotal||3;
  const panels=[
- h('section',{'data-instruction-step':'0'},h('h2',{text:'あなたの役割'}),h('p',{class:'notice compact',text:state.notice}),h('p',{class:'instruction-lead'},rich(k===1?`この調査では、1 件の案件を担当します。同僚が作成した報告案を受け取り、**最終確認をして上司へ提出します。**`:`この調査では、${k} 件の案件を順に担当します。案件ごとに、別の同僚が作成した報告案を受け取り、**最終確認をして上司へ提出します。**`)),h('p',{},rich(state.role)),h('p',{class:'muted',text:k===1?'最初に、上司からの依頼を見せます。同僚の'+((state.senders||[])[0]||'')+'さんとは、今回が初めての仕事です。':'案件ごとに、上司からの依頼を最初に見せます。同僚（'+(state.senders||[]).map(x=>x+'さん').join('、')+'）とは、どの人とも今回が初めての仕事です。'}),h('p',{class:'notice compact warning',text:state.workRule}),...(state.auditNotice?[h('p',{class:'notice compact',text:state.auditNotice})]:[])),
+ h('section',{'data-instruction-step':'0'},h('h2',{text:'あなたの役割'}),h('p',{class:'notice compact',text:state.notice}),h('p',{class:'instruction-lead'},rich(k===1?`この調査では、1 件の案件を担当します。同僚が作成した報告案を受け取り、**最終確認をして上司へ提出します。**`:`この調査では、${k} 件の案件を順に担当します。案件ごとに、別の同僚が作成した報告案を受け取り、**最終確認をして上司へ提出します。**`)),h('p',{},rich(state.role)),h('p',{class:'muted',text:k===1?'最初に、上司からの依頼を見せます。同僚の'+((state.senders||[])[0]||'')+'さんとは、今回が初めての仕事です。':'案件ごとに、上司からの依頼を最初に見せます。同僚（'+(state.senders||[]).map(x=>x+'さん').join('、')+'）とは、どの人とも今回が初めての仕事です。'}),h('p',{class:'notice compact warning',text:state.workRule}),...(state.sourceCheckNote?[h('p',{class:'notice compact',text:state.sourceCheckNote})]:[]),...(state.auditNotice?[h('p',{class:'notice compact',text:state.auditNotice})]:[])),
  h('section',{'data-instruction-step':'1'},h('h2',{text:bg.title}),h('p',{class:'muted',text:bg.instruction}),...bg.questions.map(renderQ))
  ];
  const stepNames=['役割','事前の質問'];
@@ -66,7 +66,7 @@ function materialsScreen(){
  return h('div',{class:'narrow'},card(h('p',{class:'step',text:caseLabel()}),h('h1',{text:state.caseTitle}),
   ...(state.attempts&&localStorage.getItem('precheck-fail:'+state.sessionId+':'+state.phase)?[h('p',{class:'notice warning',text:'答えが説明と合っていません。説明を読み直して、もう一度答えてください。'})]:[]),
   block(state.request.title,h('div',{class:'request-body'},h('p',{},rich(state.request.lead)),...paragraphs(state.request.paragraphs))),block('言葉の説明',h('p',{text:state.terms})),
-  block('資料',h('p',{class:'muted',text:`資料 S1〜S${state.sources.length} は、報告案を受け取った後の画面で開けます。`})),
+  block('資料',h('p',{class:'muted',text:state.materialsNote||`資料 S1〜S${state.sources.length} は、報告案を受け取った後の画面で開けます。`})),
   block('確認の質問',f)));
 }
 function keywordBlock(kw){const input=h('input',{type:'text',id:'final-keyword',value:kw,readonly:'','aria-label':'最終キーワード',spellcheck:'false'});const status=h('span',{class:'muted',id:'copy-status'});const btn=h('button',{type:'button',id:'copy-keyword',onclick:async()=>{input.focus();input.select();try{await navigator.clipboard.writeText(kw);status.textContent='コピーしました'}catch{try{document.execCommand('copy');status.textContent='コピーしました'}catch{status.textContent='選択してコピーしてください'}}log('keyword_copy',{})}},'コピー');return h('div',{class:'notice keyword-block',id:'completion-keyword'},h('p',{text:'すべての課題が終了しました。募集サイトの回答欄に、次の最終キーワードを入力してください。'}),h('p',{class:'keyword-label',text:'最終キーワード'}),h('div',{class:'keyword-row'},input,btn),status)}
