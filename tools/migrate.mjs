@@ -1,6 +1,6 @@
 // Apply migrations/2026-09-21-v4.sql to the local or remote D1 database, skipping columns that already exist.
 // Usage: node tools/migrate.mjs local | node tools/migrate.mjs remote
-// Pretest environment: D1_NAME=handoff-experiment-pretest WRANGLER_ENV=pretest node tools/migrate.mjs remote
+// Pretest environment: D1_NAME=handoff-experiment-v8 WRANGLER_ENV=v8 node tools/migrate.mjs remote
 import {readFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 const target=process.argv[2]==='remote'?'--remote':'--local';

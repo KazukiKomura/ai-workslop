@@ -61,7 +61,7 @@ test('full one-case path (v8): read gate blocks an early advance, disclosure kep
   const phase=s.data.phase.replace(/_\d+$/,'');let a={};
   if(phase==='intro')a={...answers(s.data.block),...(cases.common.introCheck?{knowledge:cases.common.introCheck.map(x=>x.answer)}:{})};
   else if(phase==='materials')a={knowledge:cases.common.precheck.map(x=>x.answer)};
-  else if(phase==='read'){reads++;assert.equal(Boolean(s.data.disclosureText),saved==='disclosed');assert.equal(s.data.readGateSeconds,4);const early=await req('/api/action',{phase:s.data.phase,revision:s.data.revision,actionId:randomUUID(),answers:{}},s.cookie);assert.equal(early.status,400,'read gate: immediate advance rejected');assert(String(early.data.error).includes('秒'));await new Promise(r=>setTimeout(r,2300))}
+  else if(phase==='read'){reads++;assert.equal(Boolean(s.data.disclosureText),saved==='disclosed');assert.equal(s.data.handoff.includes('生成AI'),saved==='disclosed','disclosed handoff line mentions AI');assert.equal(Boolean(s.data.disclosureBadge),saved==='disclosed');assert.equal(s.data.readGateSeconds,4);const early=await req('/api/action',{phase:s.data.phase,revision:s.data.revision,actionId:randomUUID(),answers:{}},s.cookie);assert.equal(early.status,400,'read gate: immediate advance rejected');assert(String(early.data.error).includes('秒'));await new Promise(r=>setTimeout(r,2300))}
   else if(phase==='edit'){edits++;a={text:s.data.initialText}}
   else if(s.data.block)a=answers(s.data.block);
   assert(!('keyword'in s.data));s=await action(s,a);

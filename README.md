@@ -204,19 +204,20 @@ Cloudflare version: `a41853c4-00d4-4dbf-922d-95b3090d3876`。
 
 変更点：1人1案件（開示はコイン投げ、文書条件は開示群内で最少件数優先、テーマは条件×開示で最少件数優先）、知覚ブロック先頭の事実型MC3問（サーバが `fmc_*_correct` を付与）、読了ゲート（`READ_GATE_SECONDS`、既定45秒、クライアントで無効化しサーバでも検証、`read_seconds` を回答に記録）、予告文・監査型注意文、1案件向けの文言、制限時間30分。
 
-## 予備実験環境（本番とは別の Worker と D1）
+## 配備（本番単一環境。v7.2 と同じ Worker と D1。旧データは protocol_version で区別）
+
+第1波（予備実験）は本実験と同じ環境・同じ募集枠で行い、MCと手続き指標だけで合否を判定する。合格ならそのまま募集を続け、第1波を本実験に含める（`docs/DESIGN-v8.md` 2節）。
 
 ```sh
-npx wrangler d1 create handoff-experiment-pretest        # 出力の database_id を wrangler.jsonc の env.pretest に貼る
-D1_NAME=handoff-experiment-pretest WRANGLER_ENV=pretest node tools/init-db.mjs
-D1_NAME=handoff-experiment-pretest WRANGLER_ENV=pretest node tools/migrate.mjs remote
-npx wrangler secret put ADMIN_KEY --env pretest < .private/admin-key.txt
-npx wrangler deploy --env pretest
-EXPERIMENT_URL=https://handoff-research-pretest.<account>.workers.dev node tools/export.mjs
-TEST_URL=https://handoff-research-pretest.<account>.workers.dev node tools/pretest-summary-v8.mjs --since <募集開始UTC>
+node tools/migrate.mjs remote                 # v8 にスキーマ変更はない（冪等）
+npx wrangler deploy
+node tools/verify-production.mjs              # 読み取り検証だけ。本番に回答を作らない
+node tools/pretest-summary-v8.mjs --since <募集開始UTC>
 ```
 
-本番（`npx wrangler deploy`、環境指定なし）は v8 を確認するまで配備しない。ローカル検証は 8795 番で行う（8791 は別セッションが占有することがある）：
+配備前に管理画面の進行状況で進行中セッションがないことを確認する。旧募集枠は閉じ、v8 用の募集枠を新しく発行して共有リンクを掲載する。
+
+ローカル検証は 8795 番で行う（8791 は別セッションが占有することがある）：
 
 ```sh
 npx wrangler d1 execute handoff-experiment --local --file schema.sql && node tools/migrate.mjs local

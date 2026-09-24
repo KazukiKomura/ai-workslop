@@ -3,7 +3,7 @@
 import {readFile,writeFile} from 'node:fs/promises';
 import cases from '../src/cases.js';
 const args=Object.fromEntries(process.argv.slice(2).map((a,i,arr)=>a.startsWith('--')?[a.slice(2),arr[i+1]&&!arr[i+1].startsWith('--')?arr[i+1]:true]:null).filter(Boolean));
-const base=process.env.TEST_URL||process.env.EXPERIMENT_URL||'https://handoff-research-pretest.research-public.workers.dev';
+const base=process.env.TEST_URL||process.env.EXPERIMENT_URL||'https://handoff-research.research-public.workers.dev';
 const key=process.env.ADMIN_KEY||(await readFile(new URL('../.private/admin-key.txt',import.meta.url),'utf8')).trim();
 const label=args.label||'',since=args.since||'';
 async function adm(path){const r=await fetch(base+'/api/admin/'+path,{headers:{authorization:'Bearer '+key}});if(!r.ok)throw new Error(path+' '+r.status);return r.json()}
@@ -41,5 +41,7 @@ p(`- 基準条件での各問の一致率: ${['fmc_info','fmc_policy','fmc_accur
 p(``);p(`## 二次MC：同意評定（条件別の平均、1〜7）`);
 for(const item of ['perc_1','perc_2','perc_3','perc_5','S','read_ease','natural']){p(`- ${item}: ${conds.map(k=>{const v=done.filter(r=>r.condition===k).map(r=>Number(r[item]));return `${k} ${mean(v)??'–'} (n=${v.filter(Number.isFinite).length})`}).join(' | ')}`)}
 p(`- 目標項目の差（操作−基準）: ${Object.entries(LIK).map(([k,item])=>{const b=mean(done.filter(r=>r.condition==='baseline').map(r=>Number(r[item])));const c=mean(done.filter(r=>r.condition===k).map(r=>Number(r[item])));return `${k}/${item} ${b!=null&&c!=null?(c-b).toFixed(2):'–'}`}).join(' | ')}`);
+p(``);p(`## AI開示の想起（recall.memory：0=説明があった,1=なかった,2=覚えていない）`);
+for(const d of ['disclosed','undisclosed']){const ss=sel.filter(s=>s.disclosure===d&&s.phase==='complete');const vals=ss.map(s=>{const r=(R.get(s.id)||[]).find(x=>x.phase==='recall');return r?JSON.parse(r.value_json).memory:null}).filter(v=>v!=null);p(`- ${d}: 説明があった ${vals.length?(vals.filter(v=>v===0).length/vals.length*100).toFixed(0):'–'}%, なかった ${vals.length?(vals.filter(v=>v===1).length/vals.length*100).toFixed(0):'–'}%, 覚えていない ${vals.length?(vals.filter(v=>v===2).length/vals.length*100).toFixed(0):'–'}% (n=${vals.length})`)}
 console.log(out.join('\n'));
 if(args.json)await writeFile(String(args.json),JSON.stringify({generatedAt:new Date().toISOString(),base,label,since,sessions:sel.length,rows},null,2));

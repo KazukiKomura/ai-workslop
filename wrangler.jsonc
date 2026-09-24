@@ -3,12 +3,5 @@
  "assets":{"directory":"./public","binding":"ASSETS","run_worker_first":true},
  "d1_databases":[{"binding":"DB","database_name":"handoff-experiment","database_id":"8896d8a5-2619-4e06-bc0d-2af4a969e35d"}],
  "observability":{"enabled":false},
- "vars":{"READ_GATE_SECONDS":"45"},
- "env":{
-  "pretest":{
-   "name":"handoff-research-pretest",
-   "vars":{"READ_GATE_SECONDS":"45"},
-   "d1_databases":[{"binding":"DB","database_name":"handoff-experiment-pretest","database_id":"REPLACE_WITH_ID_FROM_wrangler_d1_create"}]
-  }
- }
+ "vars":{"READ_GATE_SECONDS":"45"}
 }

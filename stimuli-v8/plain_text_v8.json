@@ -96,7 +96,10 @@
     "label": "資料ずれ",
     "one_line": "誤り：資料の要点と食い違う数値・事実を書く"
    }
-  }
+  },
+  "handoffDisclosed": "資料をもとに、生成AIを使って報告案を作りました。確認して、必要なら直してから提出してください。— {sender}",
+  "disclosureBadge": "生成AIを使用して作成した下書き",
+  "disclosureRecallCriterion": "開示群の正確な想起（説明があった）80%以上、非開示群の誤想起（説明があった）15%以下。"
  },
  "cases": {
   "CASE01_LIGHTING": {
